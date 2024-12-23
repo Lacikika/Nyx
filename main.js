@@ -1,9 +1,9 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { incrementUserActivity } = require('./utils.js');
+const { log, incrementUserActivity, getUserActivity, logMessage, getLogChannel } = require('./utils.js');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
-const { log } = require('./utils.js');
+
 
 const client = new Client({
     intents: [
@@ -15,12 +15,7 @@ const client = new Client({
     partials: ['USER', 'GUILD_MEMBER', 'CHANNEL'],
 });
 
-
-
-
-
 log('W', 'test1', 'test2');
-
 
 client.commands = new Collection();
 const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
@@ -34,12 +29,6 @@ for (const file of commandFiles) {
     }
 }
 
-
-const logFilePath = path.join(__dirname, 'interactionLogs.txt');
-function logMessage(message) {
-    const timestamp = new Date().toISOString();
-    fs.appendFileSync(logFilePath, `[${timestamp}] ${message}\n`, 'utf8');
-}
 /*
 let i = 1;
 while (i <= 100) {
@@ -63,9 +52,6 @@ client.on('interactionCreate', async (interaction) => {
                 log('E', `Command not found: ${interaction.commandName}`, interaction.user.tag);
             }
         }
-        
-        
-        
         
         // Handle Button Interactions
         else if (interaction.isButton()) {
@@ -116,7 +102,6 @@ client.on('interactionCreate', async (interaction) => {
     }
 });
 
-
 client.on('messageCreate', (message) => {
     // Ignore messages from bots
     if (message.author.bot) return;
@@ -124,39 +109,62 @@ client.on('messageCreate', (message) => {
     incrementUserActivity(message.author.id);
 });
 
-
-// Event listener for role changes
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
-    const oldRolesCache = oldMember.roles.cache;
-    const newRolesCache = newMember.roles.cache;
+    try {
+        const logChannelId = await getLogChannel(newMember.guild.id);
+        if (!logChannelId) return;
 
-    const rolesAdded = newRolesCache.filter(role => !oldRolesCache.has(role.id));
-    const rolesRemoved = oldRolesCache.filter(role => !newRolesCache.has(role.id));
+        const logChannel = newMember.guild.channels.cache.get(logChannelId);
+        if (!logChannel) return;
 
-    const user = newMember.user;
-    let notificationMessage = '';
+        const oldRolesCache = oldMember.roles.cache;
+        const newRolesCache = newMember.roles.cache;
 
-    if (rolesAdded.size > 0) {
-        const addedRolesNames = rolesAdded.map(role => role.name).join(', ');
-        notificationMessage += `🔹 Uj rangok hozzáadva: ${addedRolesNames}\n`;
-        log('I', `New roles added: ${addedRolesNames}`, user.tag);
-    }
-    if (rolesRemoved.size > 0) {
-        const removedRolesNames = rolesRemoved.map(role => role.name).join(', ');
-        notificationMessage += `🔻 Rang levéve: ${removedRolesNames}\n`;
-        log('I', `Roles removed: ${removedRolesNames}`, user.tag);
-    }
+        const rolesAdded = newRolesCache.filter(role => !oldRolesCache.has(role.id));
+        const rolesRemoved = oldRolesCache.filter(role => !newRolesCache.has(role.id));
 
-    if (notificationMessage) {
-        try {
-            await user.send(`Szia  @${user.tag},\n${notificationMessage}`);
-        } catch (error) {
-            log('E', `Failed to send message to ${user.tag}: ${error}`, user.tag);
+        if (rolesAdded.size > 0 || rolesRemoved.size > 0) {
+            const changes = [];
+            if (rolesAdded.size > 0) {
+                changes.push(`🔹 Rangok hozzáadva: ${rolesAdded.map(role => role.name).join(', ')}`);
+            }
+            if (rolesRemoved.size > 0) {
+                changes.push(`🔻 Rangok levéve: ${rolesRemoved.map(role => role.name).join(', ')}`);
+            }
+
+            const message = `A rangjaid változtak:\n${changes.join('\n')}`;
+            newMember.send(message).catch(error => console.log(`Nem sikerült üzenetet küldeni ${newMember.user.tag} számára.`));
+
+            const changer = await findRoleChanger(newMember.guild, newMember);
+            if (changer) {
+                logChannel.send(`${newMember} rangjai változtak:\n${message}\nA rangokat ${changer.tag} változtatta meg.`);
+            } else {
+                logChannel.send(`${newMember} rangjai változtak:\n${message}\nNem sikerült megtalálni a rangokat változtató felhasználót.`);
+            }
         }
+    } catch (error) {
+        console.error('Error fetching log channel:', error);
     }
 });
 
-
+async function findRoleChanger(guild, member) {
+    try {
+        const auditLogs = await guild.fetchAuditLogs({
+            type: 'MEMBER_ROLE_UPDATE',
+            limit: 1,
+        });
+        const entry = auditLogs.entries.find(entry => entry.target.id === member.id);
+        if (entry) {
+            console.log(`Audit log entry found: ${entry.executor.tag} changed roles for ${member.user.tag}`);
+        } else {
+            console.log(`No audit log entry found for ${member.user.tag}`);
+        }
+        return entry ? entry.executor : null;
+    } catch (error) {
+        console.error('Error fetching audit logs:', error);
+        return null;
+    }
+}
 
 // Log loaded commands
 console.log(`Loaded ${client.commands.size} commands:`);
