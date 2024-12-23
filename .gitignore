@@ -1,0 +1,6 @@
+/.env
+/interactionLogs.txt
+/minecrfat
+/node_modules
+/package-lock.json
+/package.json
