@@ -1,9 +1,8 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { log, incrementUserActivity, getUserActivity, logMessage, getLogChannel } = require('./utils.js');
+const { log, incrementUserActivity, getUserActivity, logMessage, getLogChannel, createPlayer } = require('./utils.js');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
-
 
 const client = new Client({
     intents: [
@@ -11,11 +10,10 @@ const client = new Client({
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildVoiceStates,
     ],
     partials: ['USER', 'GUILD_MEMBER', 'CHANNEL'],
 });
-
-log('SYSTEM', 'Bot successfully started', 'SYSTEM');
 
 client.commands = new Collection();
 const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
@@ -29,15 +27,6 @@ for (const file of commandFiles) {
     }
 }
 
-/*
-let i = 1;
-while (i <= 100) {
-  console.log(`${i}%`);
-  i++;
-  setTimeout(() => {}, 1000); // wait 100ms before next iteration
-}
-
-*/
 
 client.on('interactionCreate', async (interaction) => {
     try {
@@ -145,7 +134,6 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
             }
         }
     } catch (error) {
-        console.error('Error fetching log channel:', error);
         log('E', `Error fetching log channel: ${error}`, newMember.user.tag);
     }
 });
@@ -153,7 +141,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 async function findRoleChanger(guild, member) {
     try {
         const auditLogs = await guild.fetchAuditLogs({
-            type: 25, // you problably dont want to change this value becous it took me a long time to figureit out
+            type: 25, // you probably don't want to change this value because it took me a long time to figure it out
             limit: 1,
         });
         const entry = auditLogs.entries.first();
@@ -169,6 +157,11 @@ async function findRoleChanger(guild, member) {
         return null;
     }
 }
+// Start the bot
+
+client.once('ready', () => {
+    console.log(`Logged in as ${client.user.tag}!`);
+});
 
 // Log loaded commands
 console.log(`Loaded ${client.commands.size} commands:`);

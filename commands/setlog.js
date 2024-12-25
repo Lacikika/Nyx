@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
-const { setlogchannel , connection } = require('../utils.js'); // Adjust the path  connection = require('../utils.js'); // Adjust the path
+const { setlogchannel } = require('../utils.js'); // Adjust the path  connection = require('../utils.js'); // Adjust the path
 
 
 module.exports = {

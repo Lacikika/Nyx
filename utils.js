@@ -2,30 +2,26 @@ const mysql = require('mysql2');
 require('dotenv').config();
 const fs = require('fs');
 
-function log(kind, message, username,) {
+function log(kind, message, username) {
     const timestamp = new Date().toISOString();
 
     if (kind === 'W') {
         console.warn(`[ ${timestamp} ][ WARNING ] ${username} | ${message}`);
-
     } else if (kind === 'E') {
         console.error(`[ ${timestamp} ][ ERROR ] ${username} | ${message}`);
-
     } else if (kind === 'I') {
         console.log(`[ ${timestamp} ][ INFO ] ${username} | ${message}`);
-    }    
-    else    {
+    } else {
         console.log(`[ ${timestamp} ][ ${kind} ] ${username} | ${message}`);
     }
-} 
-
+}
 
 // Create a connection to the database
 const connection = mysql.createConnection({
-    host: process.env.MYSQL_HOST ,
-    user: process.env.MYSQL_USER ,
-    password: process.env.MYSQL_PASSWORD ,
-    database: process.env.MYSQL_DATABASE ,
+    host: process.env.MYSQL_HOST,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
 });
 
 // Connect to the database
@@ -34,8 +30,9 @@ connection.connect((err) => {
         console.error('Database connection failed:', err);
         return;
     }
-    
+    console.log('Connected to the database.');
 });
+
 
 // Increment user activity
 function incrementUserActivity(userId) {
@@ -47,7 +44,6 @@ function incrementUserActivity(userId) {
         }
     });
 }
-
 
 // Get user activity
 function getUserActivity(userId, callback) {
@@ -68,7 +64,6 @@ function logMessage(message) {
     const timestamp = new Date().toISOString();
     fs.appendFileSync(logFilePath, `[${timestamp}] ${message}\n`, 'utf8');
 }
-
 
 function getLogChannel(guildId) {
     return new Promise((resolve, reject) => {
@@ -98,6 +93,4 @@ function setlogchannel(guildId, channelId) {
     });
 }
 
-
 module.exports = { log, incrementUserActivity, getUserActivity, logMessage, getLogChannel, setlogchannel };
-

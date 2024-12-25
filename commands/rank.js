@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { getUserActivity } = require('../database.js');
-const { loging } = require('../utils.js');
+const { getUserActivity } = require('../utils.js');
+const { log } = require('../utils.js');
 function getRank(messageCount) {
     if (messageCount < 100) return 'Új fiú';
     if (messageCount >= 100 && messageCount < 500) return 'Kezdő';
@@ -26,7 +26,7 @@ module.exports = {
                 .setDescription(`Messages Sent: ${messageCount}\nRank: ${rank}`)
 
             await interaction.reply({ embeds: [embed] });
-            loging('I', `has checked their rank`, interaction.user.username);
+            log('I', `has checked their rank`, interaction.user.username);
         });
     }
 };
