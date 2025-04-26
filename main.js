@@ -168,6 +168,6 @@ console.log(`Loaded ${client.commands.size} commands:`);
 client.commands.forEach((command) => console.log(`- ${command.data.name}`));
 
 // Log in to Discord with your bot token
-client.login(process.env.BOT_TOKEN) // Make sure to use the environment variable for security
+client.login(process.env.TOKEN) // Make sure to use the environment variable for security
     .then(() => console.log("✅ elindultam te paraszt"))
     .catch(err => console.error("❌ Failed to log in:", err));
