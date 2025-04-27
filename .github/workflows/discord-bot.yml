@@ -1,34 +1,32 @@
-name: Run Discord Bot(manual)
-#nothing: # Ez a sor nem szükséges, de ha van benne valami, akkor az is működik.
+name: Run Discord Bot (manual)
 
 on:
   push:
     branches:
-      - main # Ha a 'main' ágra pusholsz, indul a Workflow
-  workflow_dispatch: # Manuálisan is indítható a GitHub-on egy gombbal
+      - main
+  workflow_dispatch:
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '23.11.0'  # vagy amit akarsz, pl. 23.11.0
+    - run: |
+        curl -fsSL https://deb.nodesource.com/setup_23.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+      name: Install Node.js manually
 
-    - name: Install dependencies
-      run: npm install
-    
-    - name: deploy commands
-      run: node deploy-commands.js # Ez a parancs telepíti a slash parancsokat a bothoz
+    - run: npm install
+      name: Install dependencies
+
+    - run: node deploy-commands.js
+      name: Deploy commands
       env:
         TOKEN: ${{ secrets.TOKEN }}
-        
-    - name: Start the bot
-      run: node main.js
+
+    - run: node main.js
+      name: Start the bot
       env:
-        TOKEN: ${{ secrets.TOKEN }} # Tokened titkosítva legyen a Secrets-ben
+        TOKEN: ${{ secrets.TOKEN }}
