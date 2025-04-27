@@ -1,4 +1,5 @@
-name: Run Discord Bot
+name: Run Discord Bot(manual)
+#nothing: # Ez a sor nem szükséges, de ha van benne valami, akkor az is működik
 
 on:
   workflow_dispatch: # Manuális indítás (gombbal GitHub-on)
