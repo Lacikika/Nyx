@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { log, incrementUserActivity, getUserActivity, logMessage, getLogChannel, createPlayer } = require('./utils.js');
+const { log,logMessage, getLogChannel, createPlayer } = require('./utils.js');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 
 const client = new Client({
@@ -95,7 +95,6 @@ client.on('messageCreate', (message) => {
     // Ignore messages from bots
     if (message.author.bot) return;
     log('I', `Message received: ${message.content}`, message.author.tag);
-    incrementUserActivity(message.author.id);
 });
 
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
