@@ -2,7 +2,10 @@ name: Run Discord Bot(manual)
 #nothing: # Ez a sor nem szükséges, de ha van benne valami, akkor az is működik.
 
 on:
-  workflow_dispatch: # Manuális indítás (gombbal GitHub-on)
+  push:
+    branches:
+      - main # Ha a 'main' ágra pusholsz, indul a Workflow
+  workflow_dispatch: # Manuálisan is indítható a GitHub-on egy gombbal
 
 jobs:
   run-bot:
@@ -22,7 +25,9 @@ jobs:
     
     - name: deploy commands
       run: node deploy-commands.js # Ez a parancs telepíti a slash parancsokat a bothoz
-
+      env:
+        TOKEN: ${{ secrets.TOKEN }}
+        
     - name: Start the bot
       run: node main.js
       env:
