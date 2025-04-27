@@ -19,6 +19,9 @@ jobs:
 
     - name: Install dependencies
       run: npm install
+    
+    - name: deploy commands
+      run: node deploy-commands.js # Ez a parancs telepíti a slash parancsokat a bothoz
 
     - name: Start the bot
       run: node main.js
