@@ -17,7 +17,7 @@ for (const file of commandFiles) {
 const guildIds = ['1278320499361054811', '1303724015361327114' ]; // Add your guild IDs here, ha a végén vagy nme kell vesző  
 
 // Initialize the REST client
-const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 // Deploy commands to each guild
 (async () => {
