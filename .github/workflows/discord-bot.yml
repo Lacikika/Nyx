@@ -1,0 +1,25 @@
+name: Run Discord Bot
+
+on:
+  workflow_dispatch: # Manuális indítás (gombbal GitHub-on)
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '23.11.0'  # vagy amit akarsz, pl. 23.11.0
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Start the bot
+      run: node main.js
+      env:
+        TOKEN: ${{ secrets.TOKEN }} # Tokened titkosítva legyen a Secrets-ben
