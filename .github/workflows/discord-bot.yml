@@ -25,6 +25,7 @@ jobs:
       name: Deploy commands
       env:
         TOKEN: ${{ secrets.TOKEN }}
+        CLIENT_ID: ${{ secrets.CLIENT_ID }}
 
     - run: node main.js
       name: Start the bot
