@@ -1,4 +1,3 @@
-// Description: Main file for the Discord bot.
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -27,7 +26,6 @@ for (const file of commandFiles) {
         console.warn(`Command in ${file} is missing a valid data object with a name.`);
     }
 }
-
 
 
 client.on('interactionCreate', async (interaction) => {

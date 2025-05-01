@@ -83,8 +83,6 @@ function getLogChannel(guildId) {
     });
 }
 
-
-
 function setlogchannel(guildId, channelId) {
     const query = `INSERT INTO log_channels (guild_id, channel_id) VALUES (?, ?)
                    ON DUPLICATE KEY UPDATE channel_id = VALUES(channel_id)`; // Update the channel_id if the guild_id already exists
