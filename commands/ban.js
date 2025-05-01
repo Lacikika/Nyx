@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { createEmbed } = require('../utils.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -16,47 +17,42 @@ module.exports = {
         const user = interaction.options.getUser('felhasználó');
         const reason = interaction.options.getString('indok') || 'Nem adott meg indokot.';
 
-        // Ellenőrizzük, hogy van-e a felhasználónak kitiltási joga
         if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
             return interaction.reply({
-                content: 'Nincs jogod kitiltani másokat.',
+                embeds: [createEmbed('Hozzáférés megtagadva', 'Nincs jogod kitiltani másokat.', 0xff0000)],
                 ephemeral: true,
             });
         }
 
-        // Ellenőrizzük, hogy a botnak van-e kitiltási joga
         const botMember = await interaction.guild.members.fetchMe();
         if (!botMember.permissions.has(PermissionFlagsBits.BanMembers)) {
             return interaction.reply({
-                content: 'Nincs jogosultságom kitiltani tagokat.',
+                embeds: [createEmbed('Hiba', 'Nincs jogosultságom kitiltani tagokat.', 0xff0000)],
                 ephemeral: true,
             });
         }
 
         try {
-            // Lekérdezzük a felhasználót a szerverről
             const member = await interaction.guild.members.fetch(user.id);
 
             if (!member) {
                 return interaction.reply({
-                    content: 'A megadott felhasználó nem található a szerveren.',
+                    embeds: [createEmbed('Hiba', 'A megadott felhasználó nem található a szerveren.', 0xff0000)],
                     ephemeral: true,
                 });
             }
 
-            // Küldjünk egy privát üzenetet a felhasználónak a tiltásról
             await user.send(`Szia ${user.username},\nKi lettél tiltva a szerverről. Indok: ${reason}`)
                 .catch(error => console.log(`Nem sikerült üzenetet küldeni ${user.tag} számára.`));
 
-            // Tiltjuk a felhasználót
             await member.ban({ reason });
             await interaction.reply({
-                content: `✅ ${user.tag} sikeresen kitiltva a szerverről. Indok: ${reason}`,
+                embeds: [createEmbed('Siker', `✅ ${user.tag} sikeresen kitiltva a szerverről. Indok: ${reason}`, 0x00ff00)],
             });
         } catch (error) {
             console.error('Hiba történt a kitiltás során:', error);
             interaction.reply({
-                content: 'Hiba történt a felhasználó kitiltásakor.',
+                embeds: [createEmbed('Hiba', 'Hiba történt a felhasználó kitiltásakor.', 0xff0000)],
                 ephemeral: true,
             });
         }

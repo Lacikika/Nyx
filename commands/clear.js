@@ -18,19 +18,19 @@ module.exports = {
                 // Fetch all messages in the channel
                 const fetchedMessages = await interaction.channel.messages.fetch({ limit: 100 });
                 await interaction.channel.bulkDelete(fetchedMessages);
-                await interaction.reply({ content: `✅ Törölve lettek az összes üzenet a csatornából.`, ephemeral: true });
+                await interaction.reply({ content: `✅ Törölve lettek az összes üzenet a csatornából.`, flags: 64 });
             } else if (count > 0 && count <= 100) {
                 // Delete a specified number of messages
                 const fetchedMessages = await interaction.channel.messages.fetch({ limit: count });
                 await interaction.channel.bulkDelete(fetchedMessages);
-                await interaction.reply({ content: `✅ ${count} üzenet törölve lett!`, ephemeral: true });
+                await interaction.reply({ content: `✅ ${count} üzenet törölve lett!`, flags: 64 });
             } else {
                 // If count is out of range
-                await interaction.reply({ content: '❌ Kérlek, adj meg egy 1 és 100 közötti számot!', ephemeral: true });
+                await interaction.reply({ content: '❌ Kérlek, adj meg egy 1 és 100 közötti számot!', flags: 64 });
             }
         } catch (error) {
             console.error('Error clearing messages:', error);
-            await interaction.reply({ content: '❌ Hiba történt az üzenetek törlése közben!', ephemeral: true });
+            await interaction.reply({ content: '❌ Hiba történt az üzenetek törlése közben!', flags: 64 });
         }
     },
 };

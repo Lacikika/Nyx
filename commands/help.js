@@ -10,7 +10,7 @@ module.exports = {
 
         await interaction.reply({
             content: `**Elérhető parancsok:**\n${commandsList}`,
-            ephemeral: true, // Csak a parancs használója látja
+            flags: 64, // Csak a parancs használója látja
         });
     },
 };

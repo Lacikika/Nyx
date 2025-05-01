@@ -4,14 +4,16 @@
   "description": "A cool project using Node.js and Discord.js",
   "main": "main.js",
   "scripts": {
-    "start": "node main.js",
+    "start": "node deploy-commands.js && node main.js",
     "build": "echo 'No build step yet'"
   },
   "author": "Nagy László",
   "license": "MIT",
   "dependencies": {
     "discord.js": "^14.0.0",
-    "dotenv": "^16.0.0"
+    "dotenv": "^16.0.0",
+    "rxdb": "^16.11.0",
+    "rxjs": "^7.8.2"
   },
   "repository": {
     "type": "git",

@@ -1,9 +1,13 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { log,logMessage, getLogChannel, createPlayer } = require('./utils.js');
+const { log, getLogChannel, initializeDatabase, getlogchannel } = require('./utils.js');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 
+/**
+ * Initializes the Discord client with required intents and partials.
+ * @type {Client}
+ */
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -15,9 +19,14 @@ const client = new Client({
     partials: ['USER', 'GUILD_MEMBER', 'CHANNEL'],
 });
 
+/**
+ * Collection to store all commands.
+ * @type {Collection<string, any>}
+ */
 client.commands = new Collection();
 const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
 
+// Load all command files dynamically
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
     if (command.data && command.data.name) {
@@ -27,9 +36,23 @@ for (const file of commandFiles) {
     }
 }
 
-
+/**
+ * Handles interaction events such as slash commands, buttons, and modals.
+ * @param {Interaction} interaction - The interaction object from Discord.js.
+ */
 client.on('interactionCreate', async (interaction) => {
     try {
+        const db = await initializeDatabase();
+        const blockedUsers = db.blockedUsers;
+
+        const isBlocked = await blockedUsers.findOne({ selector: { id: interaction.user.id } }).exec();
+        if (isBlocked) {
+            return interaction.reply({
+                embeds: [createEmbed('Hozzáférés megtagadva', 'Nem használhatod a botot, mert le vagy tiltva.', 0xff0000)],
+                ephemeral: true,
+            });
+        }
+
         // Handle Slash Commands
         if (interaction.isCommand()) {
             const command = client.commands.get(interaction.commandName);
@@ -86,20 +109,32 @@ client.on('interactionCreate', async (interaction) => {
     } catch (error) {
         log('E', `Error handling interaction: ${error}`, interaction.user.tag);
         if (interaction.isRepliable()) {
-            await interaction.reply({ content: 'There was an error processing this interaction!', ephemeral: true });
+            await interaction.reply({
+                embeds: [createEmbed('Hiba', 'Hiba történt az interakció feldolgozása során.', 0xff0000)],
+                ephemeral: true,
+            });
         }
     }
 });
 
+/**
+ * Logs every message received (except from bots).
+ * @param {Message} message - The message object from Discord.js.
+ */
 client.on('messageCreate', (message) => {
     // Ignore messages from bots
     if (message.author.bot) return;
     log('I', `Message received: ${message.content}`, message.author.tag);
 });
 
+/**
+ * Handles role changes for guild members and logs them.
+ * @param {GuildMember} oldMember - The member before the update.
+ * @param {GuildMember} newMember - The member after the update.
+ */
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     try {
-        const logChannelId = await getLogChannel(newMember.guild.id);
+        const logChannelId = await getLogChannel();
         if (!logChannelId) return;
 
         const logChannel = newMember.guild.channels.cache.get(logChannelId);
@@ -114,22 +149,20 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
         if (rolesAdded.size > 0 || rolesRemoved.size > 0) {
             const changes = [];
             if (rolesAdded.size > 0) {
-                changes.push(`🔹 Rangok hozzáadva: ${rolesAdded.map(role => role.name).join(', ')}`);
+                changes.push(`🔹 Roles added: ${rolesAdded.map(role => role.name).join(', ')}`);
             }
             if (rolesRemoved.size > 0) {
-                changes.push(`🔻 Rangok levéve: ${rolesRemoved.map(role => role.name).join(', ')}`);
+                changes.push(`🔸 Roles removed: ${rolesRemoved.map(role => role.name).join(', ')}`);
             }
 
-            const message = `A rangjaid változtak:\n${changes.join('\n')}`;
-            newMember.send(message).catch(error => console.log(`Nem sikerült üzenetet küldeni ${newMember.user.tag} számára.`));
+            const message = `Your roles have changed:\n${changes.join('\n')}`;
+            newMember.send(message).catch(error => console.log(`Failed to send message to ${newMember.user.tag}.`));
 
             const changer = await findRoleChanger(newMember.guild, newMember);
             if (changer) {
-                logChannel.send(`${newMember} rangjai változtak:\n${message}\nA rangokat @${changer.tag} változtatta meg.`);
-
+                logChannel.send(`${newMember} roles changed:\n${message}\nRoles were changed by @${changer.tag}.`);
             } else {
-                log('W', `Failed to find role changer for ${newMember.user.tag}`, newMember.user.tag);
-                logChannel.send(`${newMember} rangjai változtak:\n${message}\nNem sikerült megtalálni a rangokat változtató felhasználót.`);
+                logChannel.send(`${newMember} roles changed:\n${message}\nCould not find who changed the roles.`);
             }
         }
     } catch (error) {
@@ -137,10 +170,16 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     }
 });
 
+/**
+ * Finds the user who changed roles for a guild member.
+ * @param {Guild} guild - The guild where the role change occurred.
+ * @param {GuildMember} member - The member whose roles were changed.
+ * @returns {User|null} The user who changed the roles, or null if not found.
+ */
 async function findRoleChanger(guild, member) {
     try {
         const auditLogs = await guild.fetchAuditLogs({
-            type: 25, // you probably don't want to change this value because it took me a long time to figure it out
+            type: 25, // Role update type
             limit: 1,
         });
         const entry = auditLogs.entries.first();
@@ -156,8 +195,8 @@ async function findRoleChanger(guild, member) {
         return null;
     }
 }
-// Start the bot
 
+// Start the bot
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
 });
@@ -170,3 +209,8 @@ client.commands.forEach((command) => console.log(`- ${command.data.name}`));
 client.login(process.env.TOKEN) // Make sure to use the environment variable for security
     .then(() => console.log("✅ elindultam te paraszt"))
     .catch(err => console.error("❌ Failed to log in:", err));
+
+(async () => {
+    const db = await initializeDatabase();
+    console.log('Database initialized:', db.name);
+})();
