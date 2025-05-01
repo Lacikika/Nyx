@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { log, incrementUserActivity, getUserActivity, logMessage, getLogChannel, createPlayer } = require('./utils.js');
+const { log,logMessage, getLogChannel, createPlayer } = require('./utils.js');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 
 const client = new Client({
@@ -36,7 +36,7 @@ client.on('interactionCreate', async (interaction) => {
             if (command) {
                 await command.execute(interaction);
                 log('I', `Executed command: ${interaction.commandName} by ${interaction.user.tag}`, interaction.user.tag);
-                incrementUserActivity(interaction.user.id);
+
             } else {
                 log('E', `Command not found: ${interaction.commandName}`, interaction.user.tag);
             }
@@ -48,7 +48,7 @@ client.on('interactionCreate', async (interaction) => {
             if (command && command.handleButton) {
                 await command.handleButton(interaction);
                 log('I', `Button interaction handled for command: ${interaction.message.interaction?.commandName || ''} by ${interaction.user.tag}`, interaction.user.tag);
-                incrementUserActivity(interaction.user.id);
+
             } else {
                 log('E', `Button interaction handler not found.`, interaction.user.tag);
             }
@@ -59,7 +59,7 @@ client.on('interactionCreate', async (interaction) => {
             const command = client.commands.get(interaction.message.interaction?.commandName || '');
             if (command && command.handleSelectMenu) {
                 await command.handleSelectMenu(interaction);
-                incrementUserActivity(interaction.user.id);
+
                 log('I', `Select menu interaction handled for command: ${interaction.message.interaction?.commandName || ''} by ${interaction.user.tag}`, interaction.user.tag);
             } else {
                 log('E', `Select menu handler not found.`, interaction.user.tag);
@@ -71,7 +71,7 @@ client.on('interactionCreate', async (interaction) => {
             const command = client.commands.get(interaction.customId);
             if (command && command.handleModal) {
                 await command.handleModal(interaction);
-                incrementUserActivity(interaction.user.id);
+
                 log('I', `Modal submit interaction handled for custom ID: ${interaction.customId} by ${interaction.user.tag}`, interaction.user.tag);
             } else {
                 log('E', `Modal handler not found for ID: ${interaction.customId}`, interaction.user.tag);
@@ -80,7 +80,7 @@ client.on('interactionCreate', async (interaction) => {
         
         // Other types of interactions can be handled here if needed
         else {
-            incrementUserActivity(interaction.user.id);
+
             log('W', `Unhandled interaction type: ${interaction.type}`, interaction.user.tag);
         }
     } catch (error) {
@@ -95,7 +95,6 @@ client.on('messageCreate', (message) => {
     // Ignore messages from bots
     if (message.author.bot) return;
     log('I', `Message received: ${message.content}`, message.author.tag);
-    incrementUserActivity(message.author.id);
 });
 
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
@@ -127,7 +126,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
             const changer = await findRoleChanger(newMember.guild, newMember);
             if (changer) {
                 logChannel.send(`${newMember} rangjai változtak:\n${message}\nA rangokat @${changer.tag} változtatta meg.`);
-                incrementUserActivity(changer.id);
+
             } else {
                 log('W', `Failed to find role changer for ${newMember.user.tag}`, newMember.user.tag);
                 logChannel.send(`${newMember} rangjai változtak:\n${message}\nNem sikerült megtalálni a rangokat változtató felhasználót.`);
@@ -168,6 +167,6 @@ console.log(`Loaded ${client.commands.size} commands:`);
 client.commands.forEach((command) => console.log(`- ${command.data.name}`));
 
 // Log in to Discord with your bot token
-client.login(process.env.BOT_TOKEN) // Make sure to use the environment variable for security
+client.login(process.env.TOKEN) // Make sure to use the environment variable for security
     .then(() => console.log("✅ elindultam te paraszt"))
     .catch(err => console.error("❌ Failed to log in:", err));
