@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { log, getLogChannel, initializeDatabase, getlogchannel } = require('./utils.js');
+const { log, getlogchannel, initializeDatabase, } = require('./utils.js');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 
 /**
@@ -47,6 +47,7 @@ client.on('interactionCreate', async (interaction) => {
 
         const isBlocked = await blockedUsers.findOne({ selector: { id: interaction.user.id } }).exec();
         if (isBlocked) {
+            log('W', `Blocked user attempted to use the bot: ${interaction.user.tag}`, interaction.user.tag);
             return interaction.reply({
                 embeds: [createEmbed('Hozzáférés megtagadva', 'Nem használhatod a botot, mert le vagy tiltva.', 0xff0000)],
                 ephemeral: true,
@@ -134,11 +135,14 @@ client.on('messageCreate', (message) => {
  */
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     try {
-        const logChannelId = await getLogChannel();
+        const logChannelId = await getlogchannel();
         if (!logChannelId) return;
 
         const logChannel = newMember.guild.channels.cache.get(logChannelId);
-        if (!logChannel) return;
+        if (!logChannel || !logChannel.permissionsFor(newMember.guild.members.me).has('SEND_MESSAGES')) {
+            console.warn('Bot lacks permission to send messages in the log channel.');
+            return;
+        }
 
         const oldRolesCache = oldMember.roles.cache;
         const newRolesCache = newMember.roles.cache;
@@ -147,26 +151,48 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
         const rolesRemoved = oldRolesCache.filter(role => !newRolesCache.has(role.id));
 
         if (rolesAdded.size > 0 || rolesRemoved.size > 0) {
-            const changes = [];
+            const embed = {
+                color: rolesAdded.size > 0 && rolesRemoved.size === 0 ? 0x00ff00 : rolesRemoved.size > 0 && rolesAdded.size === 0 ? 0xff0000 : 0x0099ff,
+                title: 'Role Changes Detected',
+                description: `${newMember}'s roles have been updated.`,
+                fields: [],
+                timestamp: new Date(),
+                footer: {
+                    text: 'Role Update Logger',
+                },
+            };
+
             if (rolesAdded.size > 0) {
-                changes.push(`🔹 Roles added: ${rolesAdded.map(role => role.name).join(', ')}`);
-            }
-            if (rolesRemoved.size > 0) {
-                changes.push(`🔸 Roles removed: ${rolesRemoved.map(role => role.name).join(', ')}`);
+                embed.fields.push({
+                    name: '🔹 Roles Added',
+                    value: rolesAdded.map(role => role.name).join(', '),
+                });
             }
 
-            const message = `Your roles have changed:\n${changes.join('\n')}`;
-            newMember.send(message).catch(error => console.log(`Failed to send message to ${newMember.user.tag}.`));
+            if (rolesRemoved.size > 0) {
+                embed.fields.push({
+                    name: '🔸 Roles Removed',
+                    value: rolesRemoved.map(role => role.name).join(', '),
+                });
+            }
 
             const changer = await findRoleChanger(newMember.guild, newMember);
             if (changer) {
-                logChannel.send(`${newMember} roles changed:\n${message}\nRoles were changed by @${changer.tag}.`);
+                embed.fields.push({
+                    name: 'Changed By',
+                    value: `@${changer.tag}`,
+                });
             } else {
-                logChannel.send(`${newMember} roles changed:\n${message}\nCould not find who changed the roles.`);
+                embed.fields.push({
+                    name: 'Changed By',
+                    value: 'Could not determine who changed the roles.',
+                });
             }
+            log('I', `Roles updated for ${newMember.user.tag}: Added - [${rolesAdded.map(role => role.name).join(', ')}], Removed - [${rolesRemoved.map(role => role.name).join(', ')}]`, newMember.user.tag);
+            logChannel.send({ embeds: [embed] });
         }
     } catch (error) {
-        log('E', `Error fetching log channel: ${error}`, newMember.user.tag);
+        log('E', `Error handling guildMemberUpdate: ${error}`, newMember.user.tag);
     }
 });
 
@@ -174,10 +200,16 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
  * Finds the user who changed roles for a guild member.
  * @param {Guild} guild - The guild where the role change occurred.
  * @param {GuildMember} member - The member whose roles were changed.
- * @returns {User|null} The user who changed the roles, or null if not found.
+ * @returns {Promise<User|null>} The user who changed the roles, or null if not found.
  */
 async function findRoleChanger(guild, member) {
     try {
+        const botMember = guild.members.me; // Fetch the bot's member object
+        if (!botMember || !botMember.permissions.has('ViewAuditLog')) {
+            console.warn('Bot lacks permission to view audit logs.');
+            return null;
+        }
+
         const auditLogs = await guild.fetchAuditLogs({
             type: 25, // Role update type
             limit: 1,

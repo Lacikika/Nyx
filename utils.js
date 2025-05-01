@@ -78,7 +78,7 @@ async function initializeDatabase() {
  * @param {string} username - The username associated with the log.
  */
 function log(kind, message, username) {
-    const timestamp = new Date().toISOString();
+    const timestamp = new Date().toLocaleString('en-US', { timeZone: 'UTC', hour12: false });
     logMessage(`[ ${kind} ] ${username} | ${message}`);
 
     if (kind === 'W') {
