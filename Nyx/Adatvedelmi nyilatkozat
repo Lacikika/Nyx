@@ -1,0 +1,35 @@
+Adatvédelmi Nyilatkozat
+1. Gyűjtött adatok
+
+A bot a működése során az alábbi típusú adatokat gyűjtheti:
+
+    Felhasználói azonosítók (User ID), szerver azonosítók (Server ID), és üzenet ID-k.
+    Parancsok használatának logjai (mikor és milyen parancsot használt a felhasználó).
+    Egyéb, a bot által kezelt üzenetek, ha azok szükségesek a szolgáltatás működéséhez.
+
+2. Adatok felhasználása
+
+Az adatok kizárólag a bot működésének biztosítása érdekében kerülnek feldolgozásra, például:
+
+    Parancsok végrehajtása.
+    Hibakeresés és teljesítmény javítása.
+
+3. Adatok tárolása
+
+    Az adatokat csak a szükséges ideig tároljuk, és rendszeresen töröljük őket.
+    Az adatokat biztonságosan kezeljük, és harmadik félnek nem adjuk ki azokat.
+
+4. Felhasználók jogai
+
+    A felhasználók kérhetik adataik törlését vagy az adatgyűjtés leállítását a botot üzemeltető fejlesztőtől.
+    Ezen kérések teljesítése a Discord szabályzatának betartása mellett történik.
+
+5. Adatmegosztás
+
+A bot nem oszt meg adatokat harmadik féllel, kivéve ha az jogi kötelezettségből ered (pl. bírósági végzés).
+6. Harmadik fél API-k használata
+
+A bot bizonyos funkciókhoz harmadik fél API-kat (pl. GitHub API) használhat, amelyek saját adatvédelmi irányelveiket követik.
+7. Kapcsolat
+
+Ha kérdése van az adatvédelemmel kapcsolatban, kérjük, lépjen kapcsolatba a bot fejlesztőjével a megadott e-mail címen vagy a hivatalos kommunikációs csatornákon.
