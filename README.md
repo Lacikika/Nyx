@@ -1,19 +1,23 @@
-# Nyx Discord Bot
+# Nyx Minecraft Server Bot
 
-Nyx is a feature-rich Discord bot designed to enhance your server experience. This bot includes a variety of commands and features, such as moderation tools, user interaction commands, and utility functions.
+Nyx is a Discord bot designed to manage and interact with a Minecraft server. It allows authorized users to start the Minecraft server directly from Discord and provides feedback on the server's status.
 
 ## Features
-- **Moderation Commands**: Ban, block, unblock, and clear messages.
-- **Utility Commands**: Ping, say, and profile picture retrieval.
-- **User Interaction**: Appeal requests and help commands.
-- **Database Integration**: Tracks blocked and privileged users.
+- Start the Minecraft server using a Discord command.
+- Provides real-time feedback on server startup.
+- Permission-based access to server management commands.
+
+## Prerequisites
+Before running the bot, ensure you have the following installed:
+- [Node.js](https://nodejs.org/) (v16 or higher)
+- [Java](https://www.java.com/) (v17 or higher)
+- A Minecraft server `.jar` file (e.g., `server.jar`) in the `data/minecraft` directory.
 
 ## Installation
-
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
-   cd Nyx
+   git clone https://github.com/your-repo/nyx.git
+   cd nyx
    ```
 
 2. Install dependencies:
@@ -21,82 +25,42 @@ Nyx is a feature-rich Discord bot designed to enhance your server experience. Th
    npm install
    ```
 
-3. Set up environment variables:
-   - Create a `.env` file in the root directory.
-   - Add the following variables:
+3. Configure the bot:
+   - Create a `.env` file in the root directory with the following content:
      ```env
-     BOT_TOKEN=your-bot-token
-     CLIENT_ID=your-client-id
-     GUILD_ID=your-guild-id
+     DISCORD_TOKEN=your-discord-bot-token
+     CLIENT_ID=your-discord-client-id
+     GUILD_ID=your-discord-guild-id
+     OWNER_ID=your-discord-user-id
+     ```
+   - Replace `your-discord-bot-token`, `your-discord-client-id`, `your-discord-guild-id`, and `your-discord-user-id` with your actual values.
+
+4. Accept the Minecraft EULA:
+   - Open `data/minecraft/eula.txt` and set:
+     ```txt
+     eula=true
      ```
 
-4. Deploy commands:
+## Usage
+1. Deploy the bot's commands to Discord:
    ```bash
    node deploy-commands.js
    ```
 
-5. Start the bot:
+2. Start the bot:
    ```bash
-   npm start
+   node index.js
    ```
 
-## Commands
+3. Use the `/startminecraft` command in Discord to start the Minecraft server.
 
-### Moderation
-- **/ban**: Ban a user from the server.
-- **/block**: Block a user from using the bot.
-- **/unblock**: Unblock a user.
-- **/clear**: Clear messages in a channel.
-
-### Utility
-- **/ping**: Check the bot's latency.
-- **/say**: Make the bot say something.
-- **/profilkep**: Retrieve a user's profile picture.
-
-### User Interaction
-- **/appeal**: Send an appeal request to the bot owner.
-- **/help**: Display a list of available commands.
-
-## File Structure
-```
-Nyx/
-├── commands/          # Command modules
-├── data/              # Data files and utilities
-├── egyeb/             # Miscellaneous assets
-├── utils.js           # Utility functions
-├── main.js            # Entry point of the bot
-├── deploy-commands.js # Command deployment script
-├── config.json        # Configuration file
-├── .env               # Environment variables
-├── README.md          # Project documentation
-```
-
-## Development
-
-### Running the Bot in Development Mode
-Use the following command to start the bot in development mode:
-```bash
-npm run dev
-```
-
-### Linting and Formatting
-Ensure code quality by running ESLint and Prettier:
-```bash
-npm run lint
-npm run format
-```
-
-### Testing
-Run unit tests:
-```bash
-npm test
-```
+## Troubleshooting
+- **File Locking Issues**: Ensure no other processes are accessing the `latest.log` file or other server files.
+- **Java Not Found**: Ensure Java is installed and added to your system's PATH.
+- **Permissions**: Only the user with the `OWNER_ID` specified in the `.env` file can execute the `/startminecraft` command.
 
 ## Contributing
-Contributions are welcome! Please follow these steps:
-1. Fork the repository.
-2. Create a new branch for your feature or bugfix.
-3. Submit a pull request with a detailed description of your changes.
+Feel free to submit issues or pull requests to improve the bot.
 
 ## License
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the MIT License.
