@@ -47,6 +47,6 @@ module.exports = {
       });
       if (logs.length > 5) embed.addFields({ name: '...', value: `And ${logs.length - 5} more...` });
     }
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: 64 });
   },
 };

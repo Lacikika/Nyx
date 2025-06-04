@@ -2,6 +2,7 @@
 const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require('discord.js');
 const config = require('./config');
 const fs = require('fs');
+const { addXp } = require('../utils/rank');
 require('dotenv').config();
 
 const client = new Client({
@@ -77,6 +78,22 @@ client.on('interactionCreate', async interaction => {
     } catch (err) {
       // Silently ignore errors like Unknown interaction
     }
+  }
+});
+
+// Listen for messages to award XP
+client.on('messageCreate', async message => {
+  if (message.author.bot || !message.guild) return;
+  // Award random XP (e.g. 10-20 per message) with role bonus
+  const xp = Math.floor(Math.random() * 11) + 10;
+  const { level, leveledUp, bonus } = await addXp(message.author.id, message.guild.id, xp, client);
+  if (leveledUp) {
+    // Award coins for level up
+    const coins = level * 100;
+    await require('./utils/db').pool.query('UPDATE nyx.user_profiles SET money = COALESCE(money,0) + $1 WHERE user_id = $2 AND guild_id = $3', [coins, message.author.id, message.guild.id]);
+    try {
+      await message.channel.send({ content: `🎉 <@${message.author.id}> leveled up to **${level}** and earned **${coins} coins**!` });
+    } catch {}
   }
 });
 
