@@ -1,21 +1,46 @@
 // Example entertainment command: meme.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { Pool } = require('pg');
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const { logUserEvent } = require('../../../utils/db'); // Adjust the path as necessary
+const https = require('https');
+
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('meme')
     .setDescription('Sends a random meme'),
   async execute(interaction) {
-    // Placeholder meme URL
-    const memeUrl = 'https://i.imgur.com/8b7evkP.jpeg';
-    // Log meme command usage
-    await pool.query('INSERT INTO warnings (user_id, guild_id, reason, warned_by, date) VALUES ($1, $2, $3, $4, NOW())', [interaction.user.id, interaction.guild.id, 'Meme command used', interaction.user.id]);
-    const embed = new EmbedBuilder()
-      .setTitle('Random Meme')
-      .setImage(memeUrl)
-      .setColor('Random');
-    await interaction.reply({ embeds: [embed] });
+    // Fetch meme from API
+    https.get('https://meme-api.com/gimme', (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', async () => {
+        try {
+          const meme = JSON.parse(data);
+          const memeUrl = meme.url || 'https://i.imgur.com/8b7evkP.jpeg';
+          // Log meme command usage
+          await logUserEvent({
+            userId: interaction.user.id,
+            guildId: interaction.guild.id,
+            eventType: 'ENTERTAINMENT',
+            reason: 'Meme command used',
+            warnedBy: interaction.user.id,
+            channelId: interaction.channel.id,
+            messageId: interaction.id,
+            messageContent: meme.title || null,
+            auditLog: null
+          });
+          const embed = new EmbedBuilder()
+            .setTitle(meme.title || 'Random Meme')
+            .setImage(memeUrl)
+            .setURL(meme.postLink || memeUrl)
+            .setColor('Random');
+          await interaction.reply({ embeds: [embed] });
+        } catch (e) {
+          await interaction.reply({ content: 'Failed to fetch meme.', flags: 64 });
+        }
+      });
+    }).on('error', async () => {
+      await interaction.reply({ content: 'Failed to fetch meme.', flags: 64 });
+    });
   },
 };
