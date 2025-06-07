@@ -1,3 +1,7 @@
+# Invite Nyx to Your Server
+
+[Click here to invite Nyx](https://discord.com/oauth2/authorize?client_id=1320443178226155531)
+
 # Nyx Discord Bot
 
 A modern, all-in-one Discord bot built with Node.js, discord.js v14+, and PostgreSQL.
