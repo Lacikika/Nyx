@@ -1,6 +1,6 @@
 // commands/utility/gamble.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { pool } = require('../../../utils/db');
+const { readUser, writeUser } = require('../../../utils/jsondb');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -13,21 +13,22 @@ module.exports = {
     if (amount <= 0) return interaction.reply({ content: 'Enter a valid amount.', flags: 64 });
     const userId = interaction.user.id;
     const guildId = interaction.guild.id;
-    const res = await pool.query('SELECT money FROM nyx.user_profiles WHERE user_id = $1 AND guild_id = $2', [userId, guildId]);
-    const money = res.rows[0]?.money || 0;
+    const profile = await readUser('profiles', userId, guildId);
+    const money = profile.money || 0;
     if (money < amount) return interaction.reply({ content: 'Not enough coins.', flags: 64 });
     // 50% win chance, double or nothing
     const win = Math.random() < 0.5;
     let result, color;
     if (win) {
-      await pool.query('UPDATE nyx.user_profiles SET money = money + $1 WHERE user_id = $2 AND guild_id = $3', [amount, userId, guildId]);
+      profile.money = money + amount;
       result = `You won ${amount} coins!`;
       color = 'Green';
     } else {
-      await pool.query('UPDATE nyx.user_profiles SET money = money - $1 WHERE user_id = $2 AND guild_id = $3', [amount, userId, guildId]);
+      profile.money = money - amount;
       result = `You lost ${amount} coins.`;
       color = 'Red';
     }
+    await writeUser('profiles', userId, guildId, profile);
     const embed = new EmbedBuilder()
       .setTitle('Gamble Result')
       .setDescription(result)

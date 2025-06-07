@@ -1,6 +1,6 @@
 // commands/utility/work.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { pool } = require('../../../utils/db');
+const { readUser, writeUser } = require('../../../utils/jsondb');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -10,14 +10,16 @@ module.exports = {
     const userId = interaction.user.id;
     const guildId = interaction.guild.id;
     // Simple cooldown (1 min)
-    const res = await pool.query('SELECT last_work FROM nyx.user_profiles WHERE user_id = $1 AND guild_id = $2', [userId, guildId]);
+    const profile = await readUser('profiles', userId, guildId);
     const now = Date.now();
-    const lastWork = res.rows[0]?.last_work ? new Date(res.rows[0].last_work).getTime() : 0;
+    const lastWork = profile.last_work || 0;
     if (now - lastWork < 60000) {
       return interaction.reply({ content: 'You must wait before working again!', flags: 64 });
     }
     const earned = Math.floor(Math.random() * 101) + 50; // 50-150 coins
-    await pool.query('UPDATE nyx.user_profiles SET money = COALESCE(money,0) + $1, last_work = NOW() WHERE user_id = $2 AND guild_id = $3', [earned, userId, guildId]);
+    profile.money = (profile.money || 0) + earned;
+    profile.last_work = now;
+    await writeUser('profiles', userId, guildId, profile);
     const embed = new EmbedBuilder()
       .setTitle('Work Complete')
       .setDescription(`You earned ${earned} coins!`)

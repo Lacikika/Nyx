@@ -1,7 +1,5 @@
 // Purge command
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { Pool } = require('pg');
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,8 +24,6 @@ module.exports = {
       return interaction.reply({ embeds: [embed], ephemeral: true });
     }
     await interaction.channel.bulkDelete(amount, true);
-    // Log purge to database
-    await pool.query('INSERT INTO warnings (user_id, guild_id, reason, warned_by, date) VALUES ($1, $2, $3, $4, NOW())', [interaction.user.id, interaction.guild.id, `Purged ${amount} messages`, interaction.user.id]);
     const embed = new EmbedBuilder()
       .setTitle('Messages Purged')
       .setDescription(`Deleted ${amount} messages.`)

@@ -1,7 +1,5 @@
 // Mute command (role-based)
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { Pool } = require('pg');
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,8 +24,6 @@ module.exports = {
       });
     }
     await member.roles.add(muteRole);
-    // Log mute to database
-    await pool.query('INSERT INTO warnings (user_id, guild_id, reason, warned_by, date) VALUES ($1, $2, $3, $4, NOW())', [member.id, interaction.guild.id, 'Muted by command', interaction.user.id]);
     const embed = new EmbedBuilder()
       .setTitle('User Muted')
       .setDescription(`${member.user.tag} was muted.`)

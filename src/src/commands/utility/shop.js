@@ -1,6 +1,5 @@
 // commands/utility/shop.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { pool } = require('../../../utils/db');
 
 const shopItems = [
   { name: 'Cool Role', price: 500, description: 'A special role on the server.' },

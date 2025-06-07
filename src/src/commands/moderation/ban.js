@@ -1,8 +1,5 @@
 // Ban command
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { Pool } = require('pg');
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const { logUserEvent } = require('../../../utils/db');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -33,17 +30,6 @@ module.exports = {
       auditLog = fetched.entries.first() || null;
     } catch {}
     await member.ban();
-    await logUserEvent({
-      userId: member.id,
-      guildId: interaction.guild.id,
-      eventType: 'BAN',
-      reason: 'Banned by command',
-      warnedBy: interaction.user.id,
-      channelId: interaction.channel.id,
-      messageId: interaction.id,
-      messageContent: null,
-      auditLog
-    });
     const embed = new EmbedBuilder()
       .setTitle('User Banned')
       .setDescription(`${member.user.tag} was banned.`)

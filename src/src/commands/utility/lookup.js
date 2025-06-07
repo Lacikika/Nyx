@@ -1,6 +1,6 @@
 // Utility: lookup.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { pool } = require('../../../utils/db');
+const { readUser } = require('../../../utils/jsondb');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -12,14 +12,9 @@ module.exports = {
     const user = interaction.options.getUser('target');
     const guildId = interaction.guild.id;
     // Fetch profile
-    const profileRes = await pool.query('SELECT * FROM nyx.user_profiles WHERE user_id = $1 AND guild_id = $2', [user.id, guildId]);
-    const profile = profileRes.rows[0];
+    const profile = await readUser('profiles', user.id, guildId);
     // Fetch logs
-    const res = await pool.query(
-      'SELECT * FROM nyx.user_logs WHERE user_id = $1 AND guild_id = $2 ORDER BY date DESC',
-      [user.id, guildId]
-    );
-    const logs = res.rows;
+    const logs = (await readUser('logs', user.id, guildId)).entries || [];
     const embed = new EmbedBuilder()
       .setTitle(`Profile: ${user.tag}`)
       .setThumbnail(user.displayAvatarURL())
@@ -36,7 +31,6 @@ module.exports = {
         { name: 'Tickets', value: String(profile?.total_tickets || 0), inline: true },
         { name: 'Fun Cmds', value: String(profile?.total_entertainment || 0), inline: true },
         { name: 'Errors', value: String(profile?.total_errors || 0), inline: true },
-        // Additional info
         { name: 'XP', value: String(profile?.xp || 0), inline: true },
         { name: 'Level', value: String(profile?.level || 0), inline: true },
         { name: 'Money', value: String(profile?.money || 0), inline: true },

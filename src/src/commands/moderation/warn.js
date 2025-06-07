@@ -1,6 +1,5 @@
-// Warn command (with PostgreSQL integration)
+// Warn command
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { logUserEvent } = require('../../../utils/db');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,23 +19,11 @@ module.exports = {
     }
     const user = interaction.options.getUser('target');
     const reason = interaction.options.getString('reason') || 'No reason provided';
-    // Fetch audit log entry for warn (if available, e.g. MODERATION_ACTION)
     let auditLog = null;
     try {
       const fetched = await interaction.guild.fetchAuditLogs({ limit: 1 });
       auditLog = fetched.entries.first() || null;
     } catch {}
-    await logUserEvent({
-      userId: user.id,
-      guildId: interaction.guild.id,
-      eventType: 'WARN',
-      reason,
-      warnedBy: interaction.user.id,
-      channelId: interaction.channel.id,
-      messageId: interaction.id,
-      messageContent: reason,
-      auditLog
-    });
     const embed = new EmbedBuilder()
       .setTitle('User Warned')
       .setDescription(`${user.tag} has been warned.`)

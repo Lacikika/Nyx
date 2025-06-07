@@ -1,6 +1,6 @@
 // commands/utility/buy.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { pool } = require('../../../utils/db');
+const { readUser, writeUser } = require('../../../utils/jsondb');
 
 const shopItems = [
   { name: 'Cool Role', price: 500 },
@@ -23,13 +23,14 @@ module.exports = {
     const item = shopItems[itemIndex];
     const userId = interaction.user.id;
     const guildId = interaction.guild.id;
-    const res = await pool.query('SELECT money FROM nyx.user_profiles WHERE user_id = $1 AND guild_id = $2', [userId, guildId]);
-    const money = res.rows[0]?.money || 0;
+    const profile = await readUser('profiles', userId, guildId);
+    const money = profile.money || 0;
     if (money < item.price) {
       return interaction.reply({ content: `You need ${item.price} coins to buy this item.`, flags: 64 });
     }
-    await pool.query('UPDATE nyx.user_profiles SET money = money - $1 WHERE user_id = $2 AND guild_id = $3', [item.price, userId, guildId]);
+    profile.money = money - item.price;
     // TODO: Grant item (role, color, etc.)
+    await writeUser('profiles', userId, guildId, profile);
     const embed = new EmbedBuilder()
       .setTitle('Purchase Successful')
       .setDescription(`You bought **${item.name}** for ${item.price} coins!`)
