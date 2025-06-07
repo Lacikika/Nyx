@@ -1,6 +1,6 @@
 // Utility: lookup.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { readUser } = require('../../../utils/jsondb');
+const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -72,6 +72,16 @@ module.exports = {
       });
       if (logs.length > 5) embed.addFields({ name: '...', value: `And ${logs.length - 5} more...` });
     }
+    // Log lookup command usage
+    await appendUserLog('logs', interaction.user.id, interaction.guild.id, {
+      event_type: 'LOOKUP',
+      reason: 'Used lookup command',
+      warned_by: interaction.user.id,
+      channel_id: interaction.channel.id,
+      message_id: interaction.id,
+      message_content: null,
+      date: Date.now()
+    });
     await interaction.reply({ embeds: [embed], flag: 64 });
   },
 };

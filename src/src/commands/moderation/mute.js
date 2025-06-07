@@ -1,5 +1,6 @@
 // Mute command (role-based)
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -24,10 +25,27 @@ module.exports = {
       });
     }
     await member.roles.add(muteRole);
+    // Log mute to user log and update profile
+    const guildId = interaction.guild.id;
+    await appendUserLog('logs', member.id, guildId, {
+      event_type: 'MUTE',
+      reason: 'Muted by command',
+      warned_by: interaction.user.id,
+      channel_id: interaction.channel.id,
+      message_id: interaction.id,
+      message_content: null,
+      date: Date.now()
+    });
+    const profile = await readUser('profiles', member.id, guildId);
+    profile.total_mutes = (profile.total_mutes || 0) + 1;
+    profile.last_seen = Date.now();
+    await writeUser('profiles', member.id, guildId, profile);
+    // Log to channel
     const embed = new EmbedBuilder()
       .setTitle('User Muted')
       .setDescription(`${member.user.tag} was muted.`)
       .setColor('Orange');
+    interaction.client.logToGuildChannel(guildId, embed);
     await interaction.reply({ embeds: [embed] });
   },
 };

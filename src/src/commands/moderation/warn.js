@@ -1,5 +1,6 @@
 // Warn command
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { readUser, writeUser } = require('../../../utils/jsondb');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -19,11 +20,25 @@ module.exports = {
     }
     const user = interaction.options.getUser('target');
     const reason = interaction.options.getString('reason') || 'No reason provided';
-    let auditLog = null;
-    try {
-      const fetched = await interaction.guild.fetchAuditLogs({ limit: 1 });
-      auditLog = fetched.entries.first() || null;
-    } catch {}
+    const guildId = interaction.guild.id;
+    // Log warning to user log file
+    const logEntry = {
+      event_type: 'WARN',
+      reason,
+      warned_by: interaction.user.id,
+      channel_id: interaction.channel.id,
+      message_id: interaction.id,
+      message_content: reason,
+      date: Date.now()
+    };
+    // Append to user log
+    const { appendUserLog } = require('../../../utils/jsondb');
+    await appendUserLog('logs', user.id, guildId, logEntry);
+    // Update user profile stats
+    const profile = await readUser('profiles', user.id, guildId);
+    profile.total_warns = (profile.total_warns || 0) + 1;
+    profile.last_seen = Date.now();
+    await writeUser('profiles', user.id, guildId, profile);
     const embed = new EmbedBuilder()
       .setTitle('User Warned')
       .setDescription(`${user.tag} has been warned.`)

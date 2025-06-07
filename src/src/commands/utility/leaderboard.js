@@ -1,6 +1,7 @@
 // commands/utility/leaderboard.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getLeaderboard } = require('../../../utils/rank');
+const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,6 +15,16 @@ module.exports = {
       .setTitle('Server Leaderboard')
       .setDescription(desc)
       .setColor('Aqua');
+    // Log leaderboard command usage
+    await appendUserLog('logs', interaction.user.id, interaction.guild.id, {
+      event_type: 'LEADERBOARD',
+      reason: 'Viewed leaderboard',
+      warned_by: interaction.user.id,
+      channel_id: interaction.channel.id,
+      message_id: interaction.id,
+      message_content: null,
+      date: Date.now()
+    });
     await interaction.reply({ embeds: [embed], flags: 64 });
   },
 };

@@ -134,3 +134,7 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+src/data/guilds/788065247461638197_788065247461638197.json
+src/data

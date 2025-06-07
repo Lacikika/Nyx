@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { readUser, writeUser } = require('../../../utils/jsondb');
+const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,6 +20,16 @@ module.exports = {
     if (logChannel) config.logChannel = logChannel.id;
     if (ticketRole) config.ticketRole = ticketRole.id;
     await writeUser('guilds', guildId, guildId, config);
+    // Log guildconfig command usage
+    await appendUserLog('logs', interaction.user.id, interaction.guild.id, {
+      event_type: 'GUILDCONFIG',
+      reason: 'Updated guild config',
+      warned_by: interaction.user.id,
+      channel_id: interaction.channel.id,
+      message_id: interaction.id,
+      message_content: null,
+      date: Date.now()
+    });
     const embed = new EmbedBuilder()
       .setTitle('Guild Config Updated')
       .setDescription('Guild settings have been updated.')

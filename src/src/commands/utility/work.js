@@ -1,6 +1,6 @@
 // commands/utility/work.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { readUser, writeUser } = require('../../../utils/jsondb');
+const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,6 +20,16 @@ module.exports = {
     profile.money = (profile.money || 0) + earned;
     profile.last_work = now;
     await writeUser('profiles', userId, guildId, profile);
+    // Log work to user log and update profile
+    await appendUserLog('logs', userId, guildId, {
+      event_type: 'WORK',
+      reason: `Worked for ${earned} coins`,
+      warned_by: interaction.user.id,
+      channel_id: interaction.channel.id,
+      message_id: interaction.id,
+      message_content: null,
+      date: Date.now()
+    });
     const embed = new EmbedBuilder()
       .setTitle('Work Complete')
       .setDescription(`You earned ${earned} coins!`)

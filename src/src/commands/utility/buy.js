@@ -1,6 +1,6 @@
 // commands/utility/buy.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { readUser, writeUser } = require('../../../utils/jsondb');
+const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 
 const shopItems = [
   { name: 'Cool Role', price: 500 },
@@ -29,6 +29,16 @@ module.exports = {
       return interaction.reply({ content: `You need ${item.price} coins to buy this item.`, flags: 64 });
     }
     profile.money = money - item.price;
+    // Log buy to user log and update profile
+    await appendUserLog('logs', userId, guildId, {
+      event_type: 'BUY',
+      reason: `Bought ${item.name} for ${item.price} coins`,
+      warned_by: interaction.user.id,
+      channel_id: interaction.channel.id,
+      message_id: interaction.id,
+      message_content: null,
+      date: Date.now()
+    });
     // TODO: Grant item (role, color, etc.)
     await writeUser('profiles', userId, guildId, profile);
     const embed = new EmbedBuilder()
