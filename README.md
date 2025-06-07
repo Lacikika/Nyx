@@ -71,7 +71,6 @@ LOG_CHANNEL_ID=your-log-channel-id (optional)
 ## Requirements
 - Node.js (latest LTS)
 - discord.js v14+
-- PostgreSQL
 - dotenv
 
 ## License
