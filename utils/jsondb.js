@@ -8,7 +8,9 @@ const INTERACTION_ESTIMATED_SIZE = 512; // bytes per log entry (conservative est
 async function ensureDir(dir) {
   try {
     await fs.mkdir(dir, { recursive: true });
-  } catch {}
+  } catch (error) {
+    console.error(`Failed to create directory: ${error.message}`);
+  }
 }
 
 function getUserFile(type, userId, guildId) {

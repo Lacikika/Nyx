@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node ./src/index.js",
     "dev": "node --trace-warnings ./src/index.js",
-    "reg": "node ./src/utils/registerCommands.js",
+    "reg": "node ./scripts/register-commands.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -19,7 +19,9 @@ async function addXp(userId, guildId, amount, client) {
           bonus += Math.floor(amount * 0.05);
         }
       }
-    } catch {}
+    } catch (error) {
+      console.error(`Error fetching roles for user ${userId} in guild ${guildId}:`, error);
+    }
   }
   let totalXp = amount + bonus;
   xp += totalXp;
@@ -40,9 +42,10 @@ async function getRank(userId, guildId) {
   return { xp: profile.xp || 0, level: profile.level || 0 };
 }
 
+const fs = require('fs').promises;
+const path = require('path');
+
 async function getLeaderboard(guildId, limit = 10) {
-  const fs = require('fs').promises;
-  const path = require('path');
   const dir = path.join(__dirname, '../data/profiles');
   let users = [];
   try {
