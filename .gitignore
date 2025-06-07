@@ -136,5 +136,6 @@ dist
 .pnp.*
 
 
-src/data/guilds/788065247461638197_788065247461638197.json
 src/data
+data/
+
