@@ -1,9 +1,9 @@
-```javascript
-// config.js
+// Main configuration for the Discord bot
+require('dotenv').config();
 
 module.exports = {
-  // ...existing config,
-  logChannelId: process.env.LOG_CHANNEL_ID,
-  // ...existing config
+  token: process.env.BOT_TOKEN,
+  databaseUrl: process.env.DATABASE_URL,
+  clientId: process.env.CLIENT_ID,
+  // Add other config options as needed
 };
-```
