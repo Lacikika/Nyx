@@ -1,5 +1,5 @@
 // Example utility command: info.js
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 
 module.exports = {
@@ -17,10 +17,20 @@ module.exports = {
       message_id: interaction.id,
       message_content: null,
       date: Date.now()
-    });
-    await interaction.reply({
-      content: `Server name: ${guild.name}\nTotal members: ${guild.memberCount}`,
-      ephemeral: true,
-    });
+    }, interaction.user.username);
+    
+    const embed = new EmbedBuilder()
+      .setTitle('ℹ️ Server Info')
+      .setDescription('Basic information about this server:')
+      .setColor(0x5865F2)
+      .setThumbnail(guild.iconURL())
+      .addFields(
+        { name: 'Server Name', value: guild.name, inline: true },
+        { name: 'Total Members', value: guild.memberCount.toString(), inline: true }
+      )
+      .setFooter({ text: 'Use /serverstats for more details!' })
+      .setTimestamp();
+      
+    await interaction.reply({ embeds: [embed], ephemeral: true });
   },
 };

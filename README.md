@@ -9,8 +9,11 @@ A modern, all-in-one Discord bot built with Node.js, discord.js v14+, and Postgr
 ## Features
 - Moderation (ban, kick, mute, warn, purge, etc.)
 - Entertainment (fun commands, memes, games, 8ball, joke, etc.)
-- Ticket system (open/close support tickets)
+- Ticket system (open/close support tickets with embeds and buttons)
 - Utility commands (info, help, server stats, lookup, etc.)
+- **Log lookup commands:**
+  - `/lookupuser <user>` — View all logs for a user (global, paginated, with navigation buttons)
+  - `/lookupguild` — View all logs for this guild (paginated, with navigation buttons)
 - Full audit logging: all moderation and command actions are logged to the PostgreSQL database, including message content and audit log data
 - User profile system: `/lookup` command shows all user stats and recent actions
 - Log channel support for command usage and errors
@@ -69,7 +72,9 @@ LOG_CHANNEL_ID=your-log-channel-id (optional)
 
 ## Logging & Profiles
 - All moderation and command actions are logged to the database, including message content and audit log data.
-- Use `/lookup` to view a user's profile, stats, and recent actions.
+- Use `/lookupuser` to view a user's logs across all guilds (with pagination and navigation buttons).
+- Use `/lookupguild` to view all logs for the current guild (with pagination and navigation buttons).
+- The ticket system uses embeds and buttons for a modern, user-friendly experience.
 - All command usage and errors are sent as embeds to the log channel if `LOG_CHANNEL_ID` is set.
 
 ## Requirements

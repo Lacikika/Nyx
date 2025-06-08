@@ -17,6 +17,11 @@ function getUserFile(type, userId, guildId) {
   return path.join(baseDir, type, `${guildId}_${userId}.json`);
 }
 
+// Guild-based logging: logs are stored in data/logs/{guildId}.json
+function getGuildLogFile(guildId) {
+  return path.join(baseDir, 'logs', `${guildId}.json`);
+}
+
 async function readUser(type, userId, guildId) {
   try {
     const data = await fs.readFile(getUserFile(type, userId, guildId), 'utf8');
@@ -29,6 +34,47 @@ async function readUser(type, userId, guildId) {
 async function writeUser(type, userId, guildId, data) {
   await ensureDir(path.join(baseDir, type));
   await fs.writeFile(getUserFile(type, userId, guildId), JSON.stringify(data, null, 2));
+}
+
+// Append a log entry to the guild's log file
+async function appendGuildLog(guildId, log) {
+  await ensureDir(path.join(baseDir, 'logs'));
+  let data = { entries: [] };
+  try {
+    data = JSON.parse(await fs.readFile(getGuildLogFile(guildId), 'utf8'));
+  } catch {}
+  data.entries.unshift(log);
+  await fs.writeFile(getGuildLogFile(guildId), JSON.stringify(data, null, 2));
+}
+
+// Fetch all logs for a guild
+async function readGuildLogs(guildId) {
+  try {
+    const data = await fs.readFile(getGuildLogFile(guildId), 'utf8');
+    return JSON.parse(data).entries || [];
+  } catch {
+    return [];
+  }
+}
+
+// Fetch all logs for a user across all guilds
+async function readGlobalUserLogs(userId) {
+  const logsDir = path.join(baseDir, 'logs');
+  let allLogs = [];
+  try {
+    const files = await fs.readdir(logsDir);
+    for (const file of files) {
+      const filePath = path.join(logsDir, file);
+      const stat = await fs.stat(filePath);
+      if (stat.isFile()) {
+        const data = JSON.parse(await fs.readFile(filePath, 'utf8'));
+        if (Array.isArray(data.entries)) {
+          allLogs.push(...data.entries.filter(e => e.userId === userId));
+        }
+      }
+    }
+  } catch {}
+  return allLogs;
 }
 
 async function getTotalDataSize() {
@@ -94,21 +140,42 @@ async function getInteractionCapacity() {
   return Math.floor(MAX_DATA_SIZE / INTERACTION_ESTIMATED_SIZE);
 }
 
-// Patch appendUserLog to enforce data limit and print indicators
-async function appendUserLog(type, userId, guildId, log) {
+// Patch appendUserLog to also log to the guild log file
+async function appendUserLog(type, userId, guildId, log, username = null, extra = {}) {
   await enforceDataLimit();
   const logs = await readUser(type, userId, guildId);
   if (!Array.isArray(logs.entries)) logs.entries = [];
-  logs.entries.unshift(log);
+  // Add username and extra info to log
+  const logEntry = {
+    ...log,
+    userId,
+    guildId,
+    username: username || log.username || 'Unknown',
+    ...extra,
+    timestamp: new Date().toISOString()
+  };
+  logs.entries.unshift(logEntry);
   await writeUser(type, userId, guildId, logs);
+  await appendGuildLog(guildId, logEntry); // Also log to the guild log file
   // Indicator: print current usage and capacity
   const totalSize = await getTotalDataSize();
   const percent = ((totalSize / MAX_DATA_SIZE) * 100).toFixed(2);
   const capacity = await getInteractionCapacity();
   const used = Math.floor(totalSize / INTERACTION_ESTIMATED_SIZE);
+  // Log to console in a readable way
+  console.log('[USER LOG]', JSON.stringify(logEntry, null, 2));
   console.log(
     `[DATA MGMT] Data usage: ${(totalSize / 1024 / 1024).toFixed(2)} MB / 8192 MB (${percent}%). Interactions stored: ${used} / ${capacity}`
   );
 }
 
-module.exports = { readUser, writeUser, appendUserLog, getTotalDataSize, getInteractionCapacity };
+module.exports = {
+  readUser,
+  writeUser,
+  appendUserLog,
+  getTotalDataSize,
+  getInteractionCapacity,
+  appendGuildLog,
+  readGuildLogs,
+  readGlobalUserLogs
+};

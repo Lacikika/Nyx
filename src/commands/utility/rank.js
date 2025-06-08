@@ -14,10 +14,12 @@ module.exports = {
     const { xp, level } = await getRank(user.id, interaction.guild.id);
     const nextLevelXp = xpForLevel(level + 1);
     const embed = new EmbedBuilder()
-      .setTitle(`${user.username}'s Rank`)
+      .setTitle('📈 Your Rank')
       .setDescription(`Level: **${level}**\nXP: **${xp}** / **${nextLevelXp}**`)
       .setColor('Gold')
-      .setThumbnail(user.displayAvatarURL());
+      .setThumbnail(user.displayAvatarURL())
+      .setFooter({ text: 'Keep chatting to level up!' })
+      .setTimestamp();
     // Log rank command usage
     await appendUserLog('logs', interaction.user.id, interaction.guild.id, {
       event_type: 'RANK',
@@ -27,7 +29,7 @@ module.exports = {
       message_id: interaction.id,
       message_content: null,
       date: Date.now()
-    });
-    await interaction.reply({ embeds: [embed], flags: 64 });
+    }, interaction.user.username);
+    await interaction.reply({ embeds: [embed], ephemeral: true });
   },
 };

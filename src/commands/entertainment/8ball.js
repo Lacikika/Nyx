@@ -22,7 +22,10 @@ module.exports = {
           { name: 'Question', value: question },
           { name: 'Answer', value: response }
         )
-        .setColor('Random');
+        .setColor('Random')
+        .setThumbnail('https://cdn-icons-png.flaticon.com/512/616/616494.png')
+        .setFooter({ text: 'Ask again anytime!' })
+        .setTimestamp();
       // Log 8ball command usage
       await appendUserLog('logs', interaction.user.id, interaction.guild.id, {
         event_type: 'ENTERTAINMENT',
@@ -32,7 +35,7 @@ module.exports = {
         message_id: interaction.id,
         message_content: question,
         date: Date.now()
-      });
+      }, interaction.user.username);
       await interaction.reply({ embeds: [embed] });
     } catch (err) {
       await interaction.reply({ content: 'There was an error executing this command. ' + (err.message || err), ephemeral: true });

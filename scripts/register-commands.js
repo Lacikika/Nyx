@@ -22,6 +22,7 @@ if (!clientId) {
 }
 
 const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+const registeredNames = commands.map(cmd => `/${cmd.name || cmd.toJSON().name}`);
 
 (async () => {
   try {
@@ -31,6 +32,8 @@ const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
       { body: commands },
     );
     console.log('Successfully reloaded application (/) commands.');
+    console.log('Registered commands:');
+    registeredNames.forEach(cmd => console.log(' -', cmd));
   } catch (error) {
     console.error(error);
   }

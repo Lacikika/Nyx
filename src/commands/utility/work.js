@@ -29,11 +29,14 @@ module.exports = {
       message_id: interaction.id,
       message_content: null,
       date: Date.now()
-    });
+    }, interaction.user.username);
     const embed = new EmbedBuilder()
-      .setTitle('Work Complete')
-      .setDescription(`You earned ${earned} coins!`)
-      .setColor('Aqua');
-    await interaction.reply({ embeds: [embed], flags: 64 });
+      .setTitle('💼 Work Complete!')
+      .setDescription(`You earned **${earned}** coins! 💰`)
+      .setColor('Aqua')
+      .setThumbnail('https://cdn-icons-png.flaticon.com/512/3135/3135715.png')
+      .setFooter({ text: 'Keep working to earn more!' })
+      .setTimestamp();
+    await interaction.reply({ embeds: [embed], ephemeral: true });
   },
 };

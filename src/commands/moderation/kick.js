@@ -35,7 +35,7 @@ module.exports = {
       message_id: interaction.id,
       message_content: null,
       date: Date.now()
-    });
+    }, member.user.username);
     const profile = await readUser('profiles', member.id, guildId);
     profile.total_kicks = (profile.total_kicks || 0) + 1;
     profile.last_seen = Date.now();

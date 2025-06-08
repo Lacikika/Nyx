@@ -178,8 +178,8 @@ client.on('channelUpdate', async (oldChannel, newChannel) => {
 
 // Listen for messages to award XP
 client.on('messageCreate', async message => {
-  if (dev) console.log('[MESSAGE]', message.author?.tag, message.content);
   if (message.author.bot || !message.guild) return;
+  if (dev) console.log('[MESSAGE]', message.author?.tag, message.content);
   // Award random XP (e.g. 10-20 per message) with role bonus
   const xp = Math.floor(Math.random() * 11) + 10;
   const { level, leveledUp, bonus } = await addXp(message.author.id, message.guild.id, xp, client);

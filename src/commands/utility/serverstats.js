@@ -17,10 +17,19 @@ module.exports = {
       message_id: interaction.id,
       message_content: null,
       date: Date.now()
-    });
-    await interaction.reply({
-      content: `Server: ${guild.name}\nMembers: ${guild.memberCount}\nCreated: ${guild.createdAt.toDateString()}`,
-      ephemeral: true,
-    });
+    }, interaction.user.username);
+    const embed = new EmbedBuilder()
+      .setTitle('📊 Server Stats')
+      .setDescription('Here are the current server statistics:')
+      .setColor(0x5865F2)
+      .setThumbnail(interaction.guild.iconURL())
+      .addFields(
+        { name: 'Server', value: guild.name, inline: true },
+        { name: 'Members', value: guild.memberCount.toString(), inline: true },
+        { name: 'Created', value: guild.createdAt.toDateString(), inline: true }
+      )
+      .setFooter({ text: 'Stay active and have fun!' })
+      .setTimestamp();
+    await interaction.reply({ embeds: [embed], ephemeral: true });
   },
 };

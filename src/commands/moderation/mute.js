@@ -35,7 +35,7 @@ module.exports = {
       message_id: interaction.id,
       message_content: null,
       date: Date.now()
-    });
+    }, member.user.username);
     const profile = await readUser('profiles', member.id, guildId);
     profile.total_mutes = (profile.total_mutes || 0) + 1;
     profile.last_seen = Date.now();

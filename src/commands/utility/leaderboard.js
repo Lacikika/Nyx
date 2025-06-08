@@ -12,9 +12,15 @@ module.exports = {
     let desc = top.map((u, i) => `**${i+1}. <@${u.user_id}>** — Level ${u.level} (${u.xp} XP)`).join('\n');
     if (!desc) desc = 'No users with XP yet!';
     const embed = new EmbedBuilder()
-      .setTitle('Server Leaderboard')
-      .setDescription(desc)
-      .setColor('Aqua');
+      .setTitle('🏆 Server Leaderboard')
+      .setDescription('Top XP earners in this server!')
+      .setColor(0xFFD700)
+      .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828884.png')
+      .addFields(
+        { name: 'Leaderboard', value: desc }
+      )
+      .setFooter({ text: 'Keep chatting to climb the ranks!' })
+      .setTimestamp();
     // Log leaderboard command usage
     await appendUserLog('logs', interaction.user.id, interaction.guild.id, {
       event_type: 'LEADERBOARD',
@@ -24,7 +30,7 @@ module.exports = {
       message_id: interaction.id,
       message_content: null,
       date: Date.now()
-    });
-    await interaction.reply({ embeds: [embed], flags: 64 });
+    }, interaction.user.username);
+    await interaction.reply({ embeds: [embed], ephemeral: true });
   },
 };

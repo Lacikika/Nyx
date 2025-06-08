@@ -24,28 +24,42 @@ module.exports = {
         .setColor('Red');
       return interaction.reply({ embeds: [embed], ephemeral: true });
     }
-    await interaction.channel.bulkDelete(amount, true);
-    // Log purge to user log and update profile
-    const guildId = interaction.guild.id;
-    await appendUserLog('logs', interaction.user.id, guildId, {
-      event_type: 'PURGE',
-      reason: `Purged ${amount} messages`,
-      warned_by: interaction.user.id,
-      channel_id: interaction.channel.id,
-      message_id: interaction.id,
-      message_content: null,
-      date: Date.now()
-    });
-    const profile = await readUser('profiles', interaction.user.id, guildId);
-    profile.total_purges = (profile.total_purges || 0) + 1;
-    profile.last_seen = Date.now();
-    await writeUser('profiles', interaction.user.id, guildId, profile);
-    // Log to channel
-    const embed = new EmbedBuilder()
-      .setTitle('Messages Purged')
-      .setDescription(`Deleted ${amount} messages.`)
-      .setColor('Orange');
-    interaction.client.logToGuildChannel(guildId, embed);
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    try {
+      const deleted = await interaction.channel.bulkDelete(amount, true);
+      // Log purge to user log and update profile
+      const guildId = interaction.guild.id;
+      await appendUserLog('logs', interaction.user.id, guildId, {
+        event_type: 'PURGE',
+        reason: `Purged ${deleted.size} messages`,
+        warned_by: interaction.user.id,
+        channel_id: interaction.channel.id,
+        message_id: interaction.id,
+        message_content: null,
+        date: Date.now()
+      }, interaction.user.username);
+      const profile = await readUser('profiles', interaction.user.id, guildId);
+      profile.total_purges = (profile.total_purges || 0) + 1;
+      profile.last_seen = Date.now();
+      await writeUser('profiles', interaction.user.id, guildId, profile);
+      // Log to channel
+      const embed = new EmbedBuilder()
+        .setTitle('Messages Purged')
+        .setDescription(`Deleted ${deleted.size} messages.`)
+        .setColor('Orange');
+      interaction.client.logToGuildChannel(guildId, embed);
+      await interaction.reply({ embeds: [embed], ephemeral: true });
+    } catch (err) {
+      let msg = 'Failed to delete messages.';
+      if (err.message && err.message.includes('14 days')) {
+        msg = 'Cannot delete messages older than 14 days.';
+      } else if (err.message && err.message.includes('Missing Permissions')) {
+        msg = 'I do not have permission to delete messages in this channel.';
+      }
+      const embed = new EmbedBuilder()
+        .setTitle('Purge Failed')
+        .setDescription(msg)
+        .setColor('Red');
+      await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
   },
 };

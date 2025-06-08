@@ -21,7 +21,9 @@ module.exports = {
             .setTitle(meme.title || 'Random Meme')
             .setImage(memeUrl)
             .setURL(meme.postLink || memeUrl)
-            .setColor('Random');
+            .setColor('Random')
+            .setFooter({ text: 'Enjoy your meme! 😄' })
+            .setTimestamp();
           await interaction.reply({ embeds: [embed] });
           
           // Log meme command usage
@@ -33,7 +35,7 @@ module.exports = {
             message_id: interaction.id,
             message_content: meme.title || null,
             date: Date.now()
-          });
+          }, interaction.user.username);
         } catch (e) {
           await interaction.reply({ content: 'Failed to fetch meme.', flags: 64 });
         }

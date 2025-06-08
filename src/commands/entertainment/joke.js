@@ -1,6 +1,7 @@
 // Entertainment: joke.js
 const { SlashCommandBuilder } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
+const { EmbedBuilder } = require('discord.js');
 
 const jokes = [
   'Why did the scarecrow win an award? Because he was outstanding in his field!',
@@ -23,7 +24,15 @@ module.exports = {
       message_id: interaction.id,
       message_content: joke,
       date: Date.now()
-    });
-    await interaction.reply({ content: joke });
+    }, interaction.user.username);
+
+    const embed = new EmbedBuilder()
+      .setTitle('📝 Joke')
+      .setDescription(joke)
+      .setColor('Random')
+      .setThumbnail('https://cdn-icons-png.flaticon.com/512/616/616489.png')
+      .setFooter({ text: 'Powered by Nyx!' })
+      .setTimestamp();
+    await interaction.reply({ embeds: [embed] });
   },
 };

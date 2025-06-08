@@ -33,7 +33,7 @@ module.exports = {
     };
     // Append to user log
     const { appendUserLog } = require('../../../utils/jsondb');
-    await appendUserLog('logs', user.id, guildId, logEntry);
+    await appendUserLog('logs', user.id, guildId, logEntry, user.username);
     // Update user profile stats
     const profile = await readUser('profiles', user.id, guildId);
     profile.total_warns = (profile.total_warns || 0) + 1;
