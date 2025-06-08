@@ -4,6 +4,10 @@ const config = require('./config');
 const fs = require('fs');
 const { addXp } = require('../utils/rank');
 const { readUser, writeUser } = require('../utils/jsondb');
+let fetch;
+(async () => {
+  fetch = (await import('node-fetch')).default;
+})();
 require('dotenv').config();
 
 const client = new Client({
@@ -26,7 +30,11 @@ for (const folder of commandFolders) {
   const commandFiles = fs.readdirSync(`./src/commands/${folder}`).filter(file => file.endsWith('.js'));
   for (const file of commandFiles) {
     const command = require(`./commands/${folder}/${file}`);
-    client.commands.set(command.data.name, command);
+    if (command && command.data && command.data.name) {
+      client.commands.set(command.data.name, command);
+    } else {
+      console.warn(`[COMMAND LOAD WARNING] Skipped file: ./commands/${folder}/${file} (missing .data.name)`);
+    }
   }
 }
 
@@ -176,10 +184,52 @@ client.on('channelUpdate', async (oldChannel, newChannel) => {
   }
 });
 
-// Listen for messages to award XP
+// Listen for messages to award XP and moderate
 client.on('messageCreate', async message => {
   if (message.author.bot || !message.guild) return;
   if (dev) console.log('[MESSAGE]', message.author?.tag, message.content);
+
+  // --- Auto-moderation: Check message with free text moderation API ---
+  try {
+    const resp = await fetch('https://api.sightengine.com/1.0/text/check.json?lang=en&mode=standard&api_user=1404875704&api_secret=UbMDBaF2SsaY9jg8nH7bwuGAktwjPNsB', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        text: message.content
+      })
+    });
+    const data = await resp.json();
+    if (dev) console.log('[AUTOMOD API RESULT]', JSON.stringify(data));
+    // If inappropriate (profanity, personal, sexual, etc.), mute user
+    if ((data.profanity && Array.isArray(data.profanity.matches) && data.profanity.matches.length > 0) ||
+        (data.personal && Array.isArray(data.personal.matches) && data.personal.matches.length > 0) ||
+        (data.sexual && Array.isArray(data.sexual.matches) && data.sexual.matches.length > 0) ||
+        (data.insult && Array.isArray(data.insult.matches) && data.insult.matches.length > 0)) {
+      try { await message.delete(); } catch {}
+      const member = await message.guild.members.fetch(message.author.id);
+      let muteRole = message.guild.roles.cache.find(r => r.name === 'Muted');
+      if (!muteRole) {
+        muteRole = await message.guild.roles.create({ name: 'Muted', permissions: [] });
+        message.guild.channels.cache.forEach(async (channel) => {
+          await channel.permissionOverwrites.create(muteRole, { SendMessages: false, AddReactions: false });
+        });
+      }
+      // Calculate mute duration (increasing per offense)
+      const profile = await readUser('profiles', member.id, message.guild.id);
+      profile.auto_mute_count = (profile.auto_mute_count || 0) + 1;
+      await writeUser('profiles', member.id, message.guild.id, profile);
+      const duration = Math.min(5 * 60 * 1000 * profile.auto_mute_count, 24 * 60 * 60 * 1000); // 5min, 10min, ... up to 24h
+      await member.roles.add(muteRole);
+      await message.channel.send({ content: `🚨 <@${member.id}> was auto-muted for inappropriate content. Duration: ${Math.floor(duration/60000)} min.` });
+      setTimeout(async () => {
+        if (member.roles.cache.has(muteRole.id)) await member.roles.remove(muteRole).catch(() => {});
+      }, duration);
+      return;
+    }
+  } catch (e) {
+    if (dev) console.error('[AUTOMOD ERROR]', e);
+  }
+
   // Award random XP (e.g. 10-20 per message) with role bonus
   const xp = Math.floor(Math.random() * 11) + 10;
   const { level, leveledUp, bonus } = await addXp(message.author.id, message.guild.id, xp, client);
