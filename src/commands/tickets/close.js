@@ -9,22 +9,22 @@ module.exports = {
   async execute(interaction) {
     const channel = interaction.channel;
     if (!channel.name.startsWith('ticket-')) {
-      return interaction.reply({ content: 'This is not a ticket channel.', ephemeral: true });
+      return interaction.reply({ content: 'Ez nem egy jegy csatorna.', ephemeral: true });
     }
     // Confirm close with embed and button
     const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
     const embed = new EmbedBuilder()
-      .setTitle('Close Ticket')
-      .setDescription('Are you sure you want to close this ticket?')
+      .setTitle('Jegy lezárása')
+      .setDescription('Biztosan le szeretnéd zárni ezt a jegyet?')
       .setColor('Red');
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('confirm_close_ticket')
-        .setLabel('Confirm Close')
+        .setLabel('Lezárás megerősítése')
         .setStyle(ButtonStyle.Danger),
       new ButtonBuilder()
         .setCustomId('cancel_close_ticket')
-        .setLabel('Cancel')
+        .setLabel('Mégse')
         .setStyle(ButtonStyle.Secondary)
     );
     const msg = await interaction.reply({ embeds: [embed], components: [row], ephemeral: true, fetchReply: true });

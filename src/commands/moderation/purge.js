@@ -11,55 +11,20 @@ module.exports = {
   async execute(interaction) {
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       const embed = new EmbedBuilder()
-        .setTitle('Permission Denied')
-        .setDescription('You do not have permission to manage messages.')
+        .setTitle('Nincs jogosultság')
+        .setDescription('Nincs jogosultságod az üzenetek törléséhez.')
         .setColor('Red');
-      return interaction.reply({ embeds: [embed], ephemeral: true });
+      return interaction.reply({ embeds: [embed], flags: 64 });
     }
     const amount = interaction.options.getInteger('amount');
-    if (amount < 1 || amount > 100) {
-      const embed = new EmbedBuilder()
-        .setTitle('Invalid Amount')
-        .setDescription('You need to input a number between 1 and 100.')
-        .setColor('Red');
-      return interaction.reply({ embeds: [embed], ephemeral: true });
+    if (!amount || amount < 1 || amount > 100) {
+      return interaction.reply({ content: 'Adj meg egy számot 1 és 100 között!', ephemeral: true });
     }
-    try {
-      const deleted = await interaction.channel.bulkDelete(amount, true);
-      // Log purge to user log and update profile
-      const guildId = interaction.guild.id;
-      await appendUserLog('logs', interaction.user.id, guildId, {
-        event_type: 'PURGE',
-        reason: `Purged ${deleted.size} messages`,
-        warned_by: interaction.user.id,
-        channel_id: interaction.channel.id,
-        message_id: interaction.id,
-        message_content: null,
-        date: Date.now()
-      }, interaction.user.username);
-      const profile = await readUser('profiles', interaction.user.id, guildId);
-      profile.total_purges = (profile.total_purges || 0) + 1;
-      profile.last_seen = Date.now();
-      await writeUser('profiles', interaction.user.id, guildId, profile);
-      // Log to channel
-      const embed = new EmbedBuilder()
-        .setTitle('Messages Purged')
-        .setDescription(`Deleted ${deleted.size} messages.`)
-        .setColor('Orange');
-      interaction.client.logToGuildChannel(guildId, embed);
-      await interaction.reply({ embeds: [embed], ephemeral: true });
-    } catch (err) {
-      let msg = 'Failed to delete messages.';
-      if (err.message && err.message.includes('14 days')) {
-        msg = 'Cannot delete messages older than 14 days.';
-      } else if (err.message && err.message.includes('Missing Permissions')) {
-        msg = 'I do not have permission to delete messages in this channel.';
-      }
-      const embed = new EmbedBuilder()
-        .setTitle('Purge Failed')
-        .setDescription(msg)
-        .setColor('Red');
-      await interaction.reply({ embeds: [embed], ephemeral: true });
-    }
+    await interaction.channel.bulkDelete(amount, true);
+    const embed = new EmbedBuilder()
+      .setTitle('Üzenetek törölve')
+      .setDescription(`${amount} üzenet törölve ebben a csatornában.`)
+      .setColor('Orange');
+    await interaction.reply({ embeds: [embed], ephemeral: true });
   },
 };

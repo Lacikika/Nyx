@@ -18,11 +18,11 @@ module.exports = {
           const meme = JSON.parse(data);
           const memeUrl = meme.url || 'https://i.imgur.com/8b7evkP.jpeg';
           const embed = new EmbedBuilder()
-            .setTitle(meme.title || 'Random Meme')
+            .setTitle(meme.title || 'Véletlen mém')
             .setImage(memeUrl)
             .setURL(meme.postLink || memeUrl)
             .setColor('Random')
-            .setFooter({ text: 'Enjoy your meme! 😄' })
+            .setFooter({ text: 'Jó szórakozást! 😄' })
             .setTimestamp();
           await interaction.reply({ embeds: [embed] });
           

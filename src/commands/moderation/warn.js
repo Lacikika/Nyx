@@ -13,13 +13,13 @@ module.exports = {
   async execute(interaction) {
     if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
       const embed = new EmbedBuilder()
-        .setTitle('Permission Denied')
-        .setDescription('You do not have permission to warn members.')
+        .setTitle('Nincs jogosultság')
+        .setDescription('Nincs jogosultságod a figyelmeztetéshez.')
         .setColor('Red');
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
     const user = interaction.options.getUser('target');
-    const reason = interaction.options.getString('reason') || 'No reason provided';
+    const reason = interaction.options.getString('reason') || 'Nincs megadva indok';
     const guildId = interaction.guild.id;
     // Log warning to user log file
     const logEntry = {
@@ -40,9 +40,9 @@ module.exports = {
     profile.last_seen = Date.now();
     await writeUser('profiles', user.id, guildId, profile);
     const embed = new EmbedBuilder()
-      .setTitle('User Warned')
-      .setDescription(`${user.tag} has been warned.`)
-      .addFields({ name: 'Reason', value: reason })
+      .setTitle('Felhasználó figyelmeztetve')
+      .setDescription(`${user.tag} figyelmeztetést kapott.`)
+      .addFields({ name: 'Indok', value: reason })
       .setColor('Orange');
     await interaction.reply({ embeds: [embed] });
   },

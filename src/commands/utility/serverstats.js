@@ -5,7 +5,7 @@ const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('serverstats')
-    .setDescription('Get detailed server statistics'),
+    .setDescription('🏴‍☠️ Szerver statisztikák megtekintése'),
   async execute(interaction) {
     const { guild } = interaction;
     // Log serverstats command usage
@@ -19,16 +19,16 @@ module.exports = {
       date: Date.now()
     }, interaction.user.username);
     const embed = new EmbedBuilder()
-      .setTitle('📊 Server Stats')
-      .setDescription('Here are the current server statistics:')
+      .setTitle('🏴‍☠️📊 Szerver statisztikák')
+      .setDescription('🏴‍☠️ Itt láthatod a szerver jelenlegi statisztikáit:')
       .setColor(0x5865F2)
       .setThumbnail(interaction.guild.iconURL())
       .addFields(
-        { name: 'Server', value: guild.name, inline: true },
-        { name: 'Members', value: guild.memberCount.toString(), inline: true },
-        { name: 'Created', value: guild.createdAt.toDateString(), inline: true }
+        { name: 'Szerver', value: guild.name, inline: true },
+        { name: 'Tagok', value: guild.memberCount.toString(), inline: true },
+        { name: 'Létrehozva', value: guild.createdAt.toLocaleDateString('hu-HU'), inline: true }
       )
-      .setFooter({ text: 'Stay active and have fun!' })
+      .setFooter({ text: '🏴‍☠️ Maradj aktív és érezd jól magad!' })
       .setTimestamp();
     await interaction.reply({ embeds: [embed], ephemeral: true });
   },

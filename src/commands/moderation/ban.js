@@ -11,16 +11,16 @@ module.exports = {
   async execute(interaction) {
     if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
       const embed = new EmbedBuilder()
-        .setTitle('Permission Denied')
-        .setDescription('You do not have permission to ban members.')
+        .setTitle('Nincs jogosultság')
+        .setDescription('Nincs jogosultságod a kitiltáshoz.')
         .setColor('Red');
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
     const member = interaction.options.getMember('target');
     if (!member.bannable) {
       const embed = new EmbedBuilder()
-        .setTitle('Ban Failed')
-        .setDescription('I cannot ban this user.')
+        .setTitle('Kitiltás sikertelen')
+        .setDescription('Ezt a felhasználót nem tudom kitiltani.')
         .setColor('Red');
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
@@ -29,7 +29,7 @@ module.exports = {
     const guildId = interaction.guild.id;
     await appendUserLog('logs', member.id, guildId, {
       event_type: 'BAN',
-      reason: 'Banned by command',
+      reason: 'Kitiltva parancs által',
       warned_by: interaction.user.id,
       channel_id: interaction.channel.id,
       message_id: interaction.id,
@@ -42,8 +42,8 @@ module.exports = {
     await writeUser('profiles', member.id, guildId, profile);
     // Log to channel
     const embed = new EmbedBuilder()
-      .setTitle('User Banned')
-      .setDescription(`${member.user.tag} was banned.`)
+      .setTitle('Felhasználó kitiltva')
+      .setDescription(`${member.user.tag} ki lett tiltva.`)
       .setColor('Orange');
     interaction.client.logToGuildChannel(guildId, embed);
     await interaction.reply({ embeds: [embed] });

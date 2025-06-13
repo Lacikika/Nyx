@@ -9,27 +9,27 @@ module.exports = {
     .addUserOption(option =>
       option.setName('target').setDescription('User to mute').setRequired(true)),
   async execute(interaction) {
-    const member = interaction.options.getMember('target');
     if (!interaction.member.permissions.has(PermissionFlagsBits.MuteMembers)) {
       const embed = new EmbedBuilder()
-        .setTitle('Permission Denied')
-        .setDescription('You do not have permission to mute members.')
+        .setTitle('Nincs jogosultság')
+        .setDescription('Nincs jogosultságod a némításhoz.')
         .setColor('Red');
-      return interaction.reply({ embeds: [embed], ephemeral: true });
+      return interaction.reply({ embeds: [embed], flags: 64 });
     }
-    let muteRole = interaction.guild.roles.cache.find(r => r.name === 'Muted');
-    if (!muteRole) {
-      muteRole = await interaction.guild.roles.create({ name: 'Muted', permissions: [] });
-      interaction.guild.channels.cache.forEach(async (channel) => {
-        await channel.permissionOverwrites.create(muteRole, { SendMessages: false, AddReactions: false });
-      });
+    const member = interaction.options.getMember('target');
+    if (!member.moderatable) {
+      const embed = new EmbedBuilder()
+        .setTitle('Némítás sikertelen')
+        .setDescription('Ezt a felhasználót nem tudom némítani.')
+        .setColor('Red');
+      return interaction.reply({ embeds: [embed], flags: 64 });
     }
-    await member.roles.add(muteRole);
+    await member.timeout(60 * 60 * 1000, 'Némítva parancs által');
     // Log mute to user log and update profile
     const guildId = interaction.guild.id;
     await appendUserLog('logs', member.id, guildId, {
       event_type: 'MUTE',
-      reason: 'Muted by command',
+      reason: 'Némítva parancs által',
       warned_by: interaction.user.id,
       channel_id: interaction.channel.id,
       message_id: interaction.id,
@@ -42,8 +42,8 @@ module.exports = {
     await writeUser('profiles', member.id, guildId, profile);
     // Log to channel
     const embed = new EmbedBuilder()
-      .setTitle('User Muted')
-      .setDescription(`${member.user.tag} was muted.`)
+      .setTitle('Felhasználó némítva')
+      .setDescription(`${member.user.tag} le lett némítva 1 órára.`)
       .setColor('Orange');
     interaction.client.logToGuildChannel(guildId, embed);
     await interaction.reply({ embeds: [embed] });

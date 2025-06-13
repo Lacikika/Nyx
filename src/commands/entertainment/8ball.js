@@ -17,14 +17,14 @@ module.exports = {
       const question = interaction.options.getString('question');
       const response = responses[Math.floor(Math.random() * responses.length)];
       const embed = new EmbedBuilder()
-        .setTitle('🎱 Magic 8ball')
+        .setTitle('🎱 Varázsgömb')
         .addFields(
-          { name: 'Question', value: question },
-          { name: 'Answer', value: response }
+          { name: 'Kérdés', value: question },
+          { name: 'Válasz', value: response }
         )
         .setColor('Random')
         .setThumbnail('https://cdn-icons-png.flaticon.com/512/616/616494.png')
-        .setFooter({ text: 'Ask again anytime!' })
+        .setFooter({ text: 'Kérdezz bátran bármikor!' })
         .setTimestamp();
       // Log 8ball command usage
       await appendUserLog('logs', interaction.user.id, interaction.guild.id, {

@@ -6,7 +6,7 @@ const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('rank')
-    .setDescription('Show your or another user\'s rank and XP')
+    .setDescription('🏴‍☠️ Nézd meg a saját XP-d és szinted!')
     .addUserOption(option =>
       option.setName('user').setDescription('User to check').setRequired(false)),
   async execute(interaction) {
@@ -14,11 +14,16 @@ module.exports = {
     const { xp, level } = await getRank(user.id, interaction.guild.id);
     const nextLevelXp = xpForLevel(level + 1);
     const embed = new EmbedBuilder()
-      .setTitle('📈 Your Rank')
-      .setDescription(`Level: **${level}**\nXP: **${xp}** / **${nextLevelXp}**`)
-      .setColor('Gold')
-      .setThumbnail(user.displayAvatarURL())
-      .setFooter({ text: 'Keep chatting to level up!' })
+      .setTitle('🏴‍☠️📈 Rangod')
+      .setDescription(`🏴‍☠️ **${user.username}** szintje és XP-je:
+
+> **Szint:** ${level}  |  **XP:** ${xp} / ${nextLevelXp}
+
+${level === 0 ? '⚓ Kezdd el az utad a chatben, hogy szintet lépj!' : '⛵ Tartsd a tempót, hogy magasabb szintet érj el!'}
+`)
+      .setColor(0xFFD700)
+      .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828884.png')
+      .setFooter({ text: '🏴‍☠️ Aktívabb chat = magasabb szint! | Nyx RP Bot', iconURL: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' })
       .setTimestamp();
     // Log rank command usage
     await appendUserLog('logs', interaction.user.id, interaction.guild.id, {

@@ -20,14 +20,14 @@ module.exports = {
     });
     // Ticket embed with close button
     const embed = new EmbedBuilder()
-      .setTitle('🎫 Ticket System')
-      .setDescription('Open a support ticket for help!')
+      .setTitle('🎫 Jegy rendszer')
+      .setDescription('Nyiss egy támogatási jegyet, ha segítségre van szükséged!')
       .setColor(0x3498db)
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/3135/3135715.png')
       .addFields(
-        { name: 'How it works', value: '• `/ticket` to open a ticket\n• Use the red button to close your ticket when done' }
+        { name: 'Hogyan működik', value: '• `/ticket` parancs egy új jegyhez\n• A piros gombbal zárhatod le a jegyet, ha végeztél' }
       )
-      .setFooter({ text: 'Our staff will be with you shortly!' })
+      .setFooter({ text: 'A staff hamarosan segít!' })
       .setTimestamp();
     await interaction.reply({ embeds: [embed], ephemeral: true });
     // Button collector for close button

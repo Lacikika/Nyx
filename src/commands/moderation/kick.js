@@ -9,27 +9,27 @@ module.exports = {
     .addUserOption(option =>
       option.setName('target').setDescription('User to kick').setRequired(true)),
   async execute(interaction) {
-    const member = interaction.options.getMember('target');
     if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
       const embed = new EmbedBuilder()
-        .setTitle('Permission Denied')
-        .setDescription('You do not have permission to kick members.')
+        .setTitle('Nincs jogosultság')
+        .setDescription('Nincs jogosultságod a kirúgáshoz.')
         .setColor('Red');
-      return interaction.reply({ embeds: [embed], ephemeral: true });
+      return interaction.reply({ embeds: [embed], flags: 64 });
     }
+    const member = interaction.options.getMember('target');
     if (!member.kickable) {
       const embed = new EmbedBuilder()
-        .setTitle('Kick Failed')
-        .setDescription('I cannot kick this user.')
+        .setTitle('Kirúgás sikertelen')
+        .setDescription('Ezt a felhasználót nem tudom kirúgni.')
         .setColor('Red');
-      return interaction.reply({ embeds: [embed], ephemeral: true });
+      return interaction.reply({ embeds: [embed], flags: 64 });
     }
     await member.kick();
     // Log kick to user log and update profile
     const guildId = interaction.guild.id;
     await appendUserLog('logs', member.id, guildId, {
       event_type: 'KICK',
-      reason: 'Kicked by command',
+      reason: 'Kirúgva parancs által',
       warned_by: interaction.user.id,
       channel_id: interaction.channel.id,
       message_id: interaction.id,
@@ -42,8 +42,8 @@ module.exports = {
     await writeUser('profiles', member.id, guildId, profile);
     // Log to channel
     const embed = new EmbedBuilder()
-      .setTitle('User Kicked')
-      .setDescription(`${member.user.tag} was kicked.`)
+      .setTitle('Felhasználó kirúgva')
+      .setDescription(`${member.user.tag} ki lett rúgva.`)
       .setColor('Orange');
     interaction.client.logToGuildChannel(guildId, embed);
     await interaction.reply({ embeds: [embed] });

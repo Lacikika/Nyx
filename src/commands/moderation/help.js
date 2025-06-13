@@ -14,11 +14,11 @@ module.exports = {
       .setColor(0x5865F2)
       .setThumbnail(interaction.client.user.displayAvatarURL())
       .addFields(
-        { name: '🛡️ Moderáció', value: '`ban`, `kick`, `mute`, `warn`, `purge`, `kickrole`', inline: false },
-        { name: '🎫 Jegyek', value: '`ticket`, `close`', inline: false },
-        { name: '🛠️ Segédletek', value: '`info`, `help`, `serverstats`, `guildconfig`, `rank`, `leaderboard`, `work`, `shop`, `buy`, `gamble`', inline: false },
-        { name: '🔎 Napló lekérdezés', value: '`lookupuser <user>` (globális naplók)\n`lookupguild` (szerver naplók)', inline: false },
-        { name: '🎉 Szórakozás', value: '`meme`, `joke`, `8ball`', inline: false }
+        { name: '🛡️ Moderáció', value: '`ban` (kitiltás), `kick` (kirúgás), `mute` (némítás), `warn` (figyelmeztetés), `purge` (üzenetek törlése), `kickrole` (szerephez tartozók kirúgása)', inline: false },
+        { name: '🎫 Jegyek', value: '`ticket` (jegy nyitása), `close` (jegy lezárása)', inline: false },
+        { name: '🛠️ Segédletek', value: '`info` (szerver infó), `help` (súgó), `serverstats` (szerver statisztika), `guildconfig` (szerver beállítás), `rank` (rangod), `leaderboard` (ranglista), `work` (munka), `shop` (bolt), `buy` (vásárlás), `gamble` (szerencsejáték)', inline: false },
+        { name: '🔎 Napló lekérdezés', value: '`lookupuser <felhasználó>` (globális naplók)\n`lookupguild` (szerver naplók)', inline: false },
+        { name: '🎉 Szórakozás', value: '`meme` (mém), `joke` (vicc), `8ball` (varázsgömb)', inline: false }
       )
       .setFooter({ text: '🏴‍☠️ Nyx súgó rendszer' })
       .setTimestamp();

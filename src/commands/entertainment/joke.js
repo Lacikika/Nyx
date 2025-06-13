@@ -27,11 +27,11 @@ module.exports = {
     }, interaction.user.username);
 
     const embed = new EmbedBuilder()
-      .setTitle('📝 Joke')
+      .setTitle('📝 Vicc')
       .setDescription(joke)
       .setColor('Random')
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/616/616489.png')
-      .setFooter({ text: 'Powered by Nyx!' })
+      .setFooter({ text: 'A poént a Nyx hozta!' })
       .setTimestamp();
     await interaction.reply({ embeds: [embed] });
   },

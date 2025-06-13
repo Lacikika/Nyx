@@ -1,0 +1,97 @@
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { readUser, writeUser } = require('../../../utils/jsondb');
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('giverole')
+    .setDescription('Rang jóváhagyás staff által')
+    .addUserOption(opt => opt.setName('user').setDescription('Felhasználó').setRequired(true))
+    .addRoleOption(opt => opt.setName('role').setDescription('Rang').setRequired(true))
+    .addStringOption(opt => opt.setName('reason').setDescription('Indok').setRequired(true)),
+  async execute(interaction) {
+    const user = interaction.options.getUser('user');
+    const role = interaction.options.getRole('role');
+    const reason = interaction.options.getString('reason');
+    const guildId = interaction.guild.id;
+    const config = await readUser('guilds', guildId, guildId);
+    const logChannelId = config.rolesChannel || config.logChannel;
+    const staffRoleId = config.staffRole || config.ticketRole;
+    const cooldownRoleId = config.roleCooldown;
+    // NE lehessen give role-t kérni, ha rajta van a cooldown rang
+    if (interaction.commandName === 'giverole' && cooldownRoleId) {
+      const member = await interaction.guild.members.fetch(user.id);
+      if (member.roles.cache.has(cooldownRoleId)) {
+        return interaction.reply({ content: 'Ez a felhasználó cooldown-on van, amíg rajta van a cooldown rang, nem kérhet új rangot!', ephemeral: true });
+      }
+    }
+    if (!logChannelId || !staffRoleId) {
+      return interaction.reply({ content: 'A roles channel vagy staff role nincs beállítva a szerver konfigurációban!', ephemeral: true });
+    }
+    const logChannel = await interaction.guild.channels.fetch(logChannelId).catch(() => null);
+    if (!logChannel) return interaction.reply({ content: 'A roles channel nem található!', ephemeral: true });
+    const embed = new EmbedBuilder()
+      .setTitle('🏆 Rang jóváhagyás')
+      .setDescription(`Felhasználó: <@${user.id}>\nRang: <@&${role.id}>\nIndok: ${reason}`)
+      .addFields(
+        { name: 'Kérelmezte', value: `<@${interaction.user.id}>`, inline: true },)
+      .setColor('Yellow')
+      .setFooter({ text: `⛏️ by Laci🛠️` })
+      .setTimestamp();
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('giverole_accept').setEmoji('✅').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId('giverole_decline').setEmoji('❌').setStyle(ButtonStyle.Danger)
+    );
+    const msg = await logChannel.send({ embeds: [embed], components: [row] });
+    await interaction.reply({ content: 'A rang jóváhagyási kérelem elküldve a staff csatornába!', ephemeral: true });
+    const filter = i => i.member.roles.cache.has(staffRoleId) && ['giverole_accept','giverole_decline'].includes(i.customId);
+    const collector = msg.createMessageComponentCollector({ filter, max: 1, time: 5 * 60 * 1000 });
+    collector.on('collect', async i => {
+      // Kérjünk be indokot egy új embeddel a csatornában, csak a staff számára
+      const reasonEmbed = new EmbedBuilder()
+        .setTitle(i.customId === 'giverole_accept' ? '✅ Indok a rang kiosztásához' : '❌ Indok az elutasításhoz')
+        .setDescription(`Írd be az indokot erre a döntésre, csak te látod! (60mp)`)
+        .setColor(i.customId === 'giverole_accept' ? 'Green' : 'Red')
+        .setFooter({ text: `Staff: ${i.user.tag}` })
+        .setTimestamp();
+      const reasonMsg = await i.reply({ embeds: [reasonEmbed], ephemeral: true, fetchReply: true });
+      // Várjuk a staff válaszát a csatornában (ephemeral, csak ő látja)
+      const msgFilter = m => m.author.id === i.user.id && m.channelId === i.channel.id;
+      const collected = await i.channel.awaitMessages({ filter: msgFilter, max: 1, time: 60000 });
+      if (collected.size > 0) {
+        const m = collected.first();
+        try { await m.delete(); } catch {}
+        if (i.customId === 'giverole_accept') {
+          const targetMember = await interaction.guild.members.fetch(user.id);
+          await targetMember.roles.add(role);
+          await msg.edit({ embeds: [embed.setColor('Green').setFooter({ text: `Elfogadta: ${i.user.tag} | Indok: ${m.content}` })], components: [] });
+          const approveEmbed = new EmbedBuilder()
+            .setTitle('✅ Rang kiosztva')
+            .setDescription(`Felhasználó: <@${user.id}>\nRang: <@&${role.id}>\nIndok: ${reason}`)
+            .addFields(
+              { name: 'Staff indok', value: `${m.content}\n**Staff:** <@${i.user.id}>` },
+              { name: 'Kérelmezte', value: `<@${interaction.user.id}>`, inline: true }
+            )
+            .setColor('Green')
+            .setFooter({ text: `Elfogadta: ${i.user.tag}` })
+            .setTimestamp();
+          await logChannel.send({ embeds: [approveEmbed] });
+        } else {
+          await msg.edit({ embeds: [embed.setColor('Red').setFooter({ text: `Elutasította: ${i.user.tag} | Indok: ${m.content}` })], components: [] });
+          const declineEmbed = new EmbedBuilder()
+            .setTitle('❌ Rang elutasítva')
+            .setDescription(`Felhasználó: <@${user.id}>\nRang: <@&${role.id}>\nIndok: ${reason}`)
+            .addFields(
+              { name: 'Staff indok', value: `${m.content}\n**Staff:** <@${i.user.id}>` },
+              { name: 'Kérelmezte', value: `<@${interaction.user.id}>`, inline: true }
+            )
+            .setColor('Red')
+            .setFooter({ text: `Elutasította: ${i.user.tag}` })
+            .setTimestamp();
+          await logChannel.send({ embeds: [declineEmbed] });
+        }
+      } else {
+        await i.followUp({ content: 'Nem érkezett indok, a rang nem került kiosztásra/elutasítva.', ephemeral: true });
+      }
+    });
+  }
+};

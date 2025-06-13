@@ -24,11 +24,11 @@ module.exports = {
       }
     }
     const embed = new EmbedBuilder()
-      .setTitle('Kick Role Results')
-      .setDescription(`Attempted to kick all members with the role <@&${role.id}>.`)
+      .setTitle('Szerephez tartozók kirúgása')
+      .setDescription('A kiválasztott szereppel rendelkező tagok kirúgva.')
       .addFields(
-        { name: 'Kicked', value: String(kicked), inline: true },
-        { name: 'Failed', value: String(failed), inline: true }
+        { name: 'Kirúgva', value: String(kicked), inline: true },
+        { name: 'Sikertelen', value: String(failed), inline: true }
       )
       .setColor('Orange');
     await interaction.reply({ embeds: [embed] });

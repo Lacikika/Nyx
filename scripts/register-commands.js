@@ -32,8 +32,8 @@ const registeredNames = commands.map(cmd => `/${cmd.name || cmd.toJSON().name}`)
       { body: commands },
     );
     console.log('Successfully reloaded application (/) commands.');
-    console.log('Registered commands:');
-    registeredNames.forEach(cmd => console.log(' -', cmd));
+    console.log(`Registered commands (${registeredNames.length}):`);
+    registeredNames.forEach((cmd, idx) => console.log(` ${idx + 1}.`, cmd));
   } catch (error) {
     console.error(error);
   }

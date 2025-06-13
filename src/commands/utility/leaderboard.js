@@ -6,20 +6,20 @@ const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('leaderboard')
-    .setDescription('Show the XP leaderboard for this server'),
+    .setDescription('🏴‍☠️ Show the XP leaderboard for this server'),
   async execute(interaction) {
     const top = await getLeaderboard(interaction.guild.id, 10);
-    let desc = top.map((u, i) => `**${i+1}. <@${u.user_id}>** — Level ${u.level} (${u.xp} XP)`).join('\n');
-    if (!desc) desc = 'No users with XP yet!';
+    let desc = top.map((u, i) => `**${i+1}. <@${u.user_id}>** — Szint ${u.level} (${u.xp} XP)`).join('\n');
+    if (!desc) desc = 'Még nincs felhasználó XP-vel!';
     const embed = new EmbedBuilder()
-      .setTitle('🏆 Server Leaderboard')
-      .setDescription('Top XP earners in this server!')
+      .setTitle('🏴‍☠️🏆 Szerver ranglista')
+      .setDescription('🏴‍☠️ A szerver legaktívabb tagjai XP alapján!')
       .setColor(0xFFD700)
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828884.png')
       .addFields(
-        { name: 'Leaderboard', value: desc }
+        { name: 'Ranglista', value: desc }
       )
-      .setFooter({ text: 'Keep chatting to climb the ranks!' })
+      .setFooter({ text: '🏴‍☠️ Csevegj sokat, hogy feljebb kerülj a ranglistán!' })
       .setTimestamp();
     // Log leaderboard command usage
     await appendUserLog('logs', interaction.user.id, interaction.guild.id, {
