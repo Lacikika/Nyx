@@ -14,10 +14,10 @@ module.exports = {
     const reason = interaction.options.getString('reason');
     const guildId = interaction.guild.id;
     const config = await readUser('guilds', guildId, guildId);
+    const staffRoles = config.staffRoles || (config.staffRole ? [config.staffRole] : []);
     const deleteChannelId = config.deleteroleChannel;
-    const staffRoleId = config.staffRole || config.ticketRole;
     const cooldownRoleId = config.roleCooldown;
-    if (!deleteChannelId || !staffRoleId || !cooldownRoleId) {
+    if (!deleteChannelId || !staffRoles.length || !cooldownRoleId) {
       return interaction.reply({ content: 'A deleterole channel, staff role vagy cooldown role nincs beállítva a szerver konfigurációban!', ephemeral: true });
     }
     const deleteChannel = await interaction.guild.channels.fetch(deleteChannelId).catch(() => null);
@@ -35,7 +35,7 @@ module.exports = {
     );
     const msg = await deleteChannel.send({ embeds: [embed], components: [row] });
     await interaction.reply({ content: 'A rang törlési kérelem elküldve a staff csatornába!', ephemeral: true });
-    const filter = i => i.member.roles.cache.has(staffRoleId) && ['deleterole_accept','deleterole_decline'].includes(i.customId);
+    const filter = i => i.member.roles.cache.some(r => staffRoles.includes(r.id)) && ['deleterole_accept','deleterole_decline'].includes(i.customId);
     const collector = msg.createMessageComponentCollector({ filter, max: 1, time: 5 * 60 * 1000 });
     collector.on('collect', async i => {
       const reasonEmbed = new EmbedBuilder()

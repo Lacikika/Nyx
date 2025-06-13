@@ -14,8 +14,8 @@ module.exports = {
     const reason = interaction.options.getString('reason');
     const guildId = interaction.guild.id;
     const config = await readUser('guilds', guildId, guildId);
+    const staffRoles = config.staffRoles || (config.staffRole ? [config.staffRole] : []);
     const logChannelId = config.rolesChannel || config.logChannel;
-    const staffRoleId = config.staffRole || config.ticketRole;
     const cooldownRoleId = config.roleCooldown;
     // NE lehessen give role-t kérni, ha rajta van a cooldown rang
     if (interaction.commandName === 'giverole' && cooldownRoleId) {
@@ -24,7 +24,7 @@ module.exports = {
         return interaction.reply({ content: 'Ez a felhasználó cooldown-on van, amíg rajta van a cooldown rang, nem kérhet új rangot!', ephemeral: true });
       }
     }
-    if (!logChannelId || !staffRoleId) {
+    if (!logChannelId || !staffRoles.length) {
       return interaction.reply({ content: 'A roles channel vagy staff role nincs beállítva a szerver konfigurációban!', ephemeral: true });
     }
     const logChannel = await interaction.guild.channels.fetch(logChannelId).catch(() => null);
@@ -43,7 +43,7 @@ module.exports = {
     );
     const msg = await logChannel.send({ embeds: [embed], components: [row] });
     await interaction.reply({ content: 'A rang jóváhagyási kérelem elküldve a staff csatornába!', ephemeral: true });
-    const filter = i => i.member.roles.cache.has(staffRoleId) && ['giverole_accept','giverole_decline'].includes(i.customId);
+    const filter = i => i.member.roles.cache.some(r => staffRoles.includes(r.id)) && ['giverole_accept','giverole_decline'].includes(i.customId);
     const collector = msg.createMessageComponentCollector({ filter, max: 1, time: 5 * 60 * 1000 });
     collector.on('collect', async i => {
       // Kérjünk be indokot egy új embeddel a csatornában, csak a staff számára

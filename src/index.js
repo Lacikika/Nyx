@@ -20,7 +20,7 @@ const client = new Client({
   ]
 });
 
-const dev = true; // Set to true to enable debug logging
+const dev = false; // Set to true to enable debug logging
 
 client.commands = new Collection();
 
@@ -48,6 +48,26 @@ for (const file of eventFiles) {
     client.on(event.name, (...args) => event.execute(...args, client));
   }
 }
+
+// --- Logging helpers ---
+client.logGuildChange = async function(guildId, embed) {
+  // Always log to the guild's log channel if set
+  const config = await readUser('guilds', guildId, guildId);
+  if (config && config.logChannel) {
+    try {
+      const channel = await client.channels.fetch(config.logChannel);
+      if (channel && channel.isTextBased()) {
+        await channel.send({ embeds: [embed] });
+      }
+    } catch (e) { if (dev) console.error('[LOG GUILD CHANGE ERROR]', e); }
+  }
+};
+
+client.logAllMessagesToConsole = function(message) {
+  // Log every message the bot can see (including DMs)
+  const location = message.guild ? `[${message.guild.name} #${message.channel.name}]` : '[DM]';
+  console.log(`[MSG] ${location} ${message.author?.tag || message.author?.id}: ${message.content}`);
+};
 
 // Helper: log to channel
 client.logToChannel = async function(embed) {
@@ -116,7 +136,7 @@ client.on('guildUpdate', async (oldGuild, newGuild) => {
       .setDescription(`Guild name changed from **${oldGuild.name}** to **${newGuild.name}**`)
       .setColor('Orange')
       .setTimestamp();
-    client.logToGuildChannel(newGuild.id, embed);
+    client.logGuildChange(newGuild.id, embed);
   }
 });
 
@@ -127,7 +147,7 @@ client.on('roleCreate', async role => {
     .setDescription(`Role **${role.name}** created.`)
     .setColor('Green')
     .setTimestamp();
-  client.logToGuildChannel(role.guild.id, embed);
+  client.logGuildChange(role.guild.id, embed);
 });
 
 client.on('roleDelete', async role => {
@@ -137,7 +157,7 @@ client.on('roleDelete', async role => {
     .setDescription(`Role **${role.name}** deleted.`)
     .setColor('Red')
     .setTimestamp();
-  client.logToGuildChannel(role.guild.id, embed);
+  client.logGuildChange(role.guild.id, embed);
 });
 
 client.on('roleUpdate', async (oldRole, newRole) => {
@@ -148,7 +168,7 @@ client.on('roleUpdate', async (oldRole, newRole) => {
       .setDescription(`Role renamed from **${oldRole.name}** to **${newRole.name}**`)
       .setColor('Orange')
       .setTimestamp();
-    client.logToGuildChannel(newRole.guild.id, embed);
+    client.logGuildChange(newRole.guild.id, embed);
   }
 });
 
@@ -159,7 +179,7 @@ client.on('channelCreate', async channel => {
     .setDescription(`Channel <#${channel.id}> created.`)
     .setColor('Green')
     .setTimestamp();
-  if (channel.guild) client.logToGuildChannel(channel.guild.id, embed);
+  if (channel.guild) client.logGuildChange(channel.guild.id, embed);
 });
 
 client.on('channelDelete', async channel => {
@@ -169,7 +189,7 @@ client.on('channelDelete', async channel => {
     .setDescription(`Channel **${channel.name}** deleted.`)
     .setColor('Red')
     .setTimestamp();
-  if (channel.guild) client.logToGuildChannel(channel.guild.id, embed);
+  if (channel.guild) client.logGuildChange(channel.guild.id, embed);
 });
 
 client.on('channelUpdate', async (oldChannel, newChannel) => {
@@ -180,12 +200,13 @@ client.on('channelUpdate', async (oldChannel, newChannel) => {
       .setDescription(`Channel renamed from **${oldChannel.name}** to **${newChannel.name}**`)
       .setColor('Orange')
       .setTimestamp();
-    if (newChannel.guild) client.logToGuildChannel(newChannel.guild.id, embed);
+    if (newChannel.guild) client.logGuildChange(newChannel.guild.id, embed);
   }
 });
 
 // Listen for messages to award XP and moderate
 client.on('messageCreate', async message => {
+  client.logAllMessagesToConsole(message);
   if (message.author.bot || !message.guild) return;
   if (dev) console.log('[MESSAGE]', message.author?.tag, message.content);
 
@@ -200,30 +221,12 @@ client.on('messageCreate', async message => {
     });
     const data = await resp.json();
     if (dev) console.log('[AUTOMOD API RESULT]', JSON.stringify(data));
-    // If inappropriate (profanity, personal, sexual, etc.), mute user
+    // If inappropriate (profanity, personal, sexual, etc.), just delete the message
     if ((data.profanity && Array.isArray(data.profanity.matches) && data.profanity.matches.length > 0) ||
         (data.personal && Array.isArray(data.personal.matches) && data.personal.matches.length > 0) ||
         (data.sexual && Array.isArray(data.sexual.matches) && data.sexual.matches.length > 0) ||
         (data.insult && Array.isArray(data.insult.matches) && data.insult.matches.length > 0)) {
       try { await message.delete(); } catch {}
-      const member = await message.guild.members.fetch(message.author.id);
-      let muteRole = message.guild.roles.cache.find(r => r.name === 'Muted');
-      if (!muteRole) {
-        muteRole = await message.guild.roles.create({ name: 'Muted', permissions: [] });
-        message.guild.channels.cache.forEach(async (channel) => {
-          await channel.permissionOverwrites.create(muteRole, { SendMessages: false, AddReactions: false });
-        });
-      }
-      // Calculate mute duration (increasing per offense)
-      const profile = await readUser('profiles', member.id, message.guild.id);
-      profile.auto_mute_count = (profile.auto_mute_count || 0) + 1;
-      await writeUser('profiles', member.id, message.guild.id, profile);
-      const duration = Math.min(5 * 60 * 1000 * profile.auto_mute_count, 24 * 60 * 60 * 1000); // 5min, 10min, ... up to 24h
-      await member.roles.add(muteRole);
-      await message.channel.send({ content: `🚨 <@${member.id}> was auto-muted for inappropriate content. Duration: ${Math.floor(duration/60000)} min.` });
-      setTimeout(async () => {
-        if (member.roles.cache.has(muteRole.id)) await member.roles.remove(muteRole).catch(() => {});
-      }, duration);
       return;
     }
   } catch (e) {
@@ -234,13 +237,11 @@ client.on('messageCreate', async message => {
   const xp = Math.floor(Math.random() * 11) + 10;
   const { level, leveledUp, bonus } = await addXp(message.author.id, message.guild.id, xp, client);
   if (leveledUp) {
-    // Award coins for level up
-    const coins = level * 100;
     const profile = await readUser('profiles', message.author.id, message.guild.id);
-    profile.money = (profile.money || 0) + coins;
+    profile.money = (0)
     await writeUser('profiles', message.author.id, message.guild.id, profile);
     try {
-      await message.channel.send({ content: `🎉 <@${message.author.id}> leveled up to **${level}** and earned **${coins} coins**!` });
+      await message.channel.send({ content: `🎉 <@${message.author.id}> leveled up to **${level}**!` });
     } catch {}
   }
   const embed = new EmbedBuilder()
@@ -251,4 +252,59 @@ client.on('messageCreate', async message => {
   client.logToGuildChannel(message.guild.id, embed);
 });
 
+// Log message deletions
+client.on('messageDelete', async message => {
+  if (!message.guild) return;
+  // Only log if the deleted message was not sent by a bot
+  if (message.author?.bot) return;
+  if (dev) console.log('[MESSAGE DELETE]', message.author?.tag, message.content);
+  const embed = new EmbedBuilder()
+    .setTitle('Üzenet törölve')
+    .setDescription(`Felhasználó: <@${message.author?.id || 'ismeretlen'}>\nCsatorna: <#${message.channel.id}>\nTartalom: ${message.content || '*nincs tartalom*'}`)
+    .setColor('Red')
+    .setTimestamp();
+  client.logGuildChange(message.guild.id, embed);
+});
+
+// Log role creation (now: Rang létrehozva)
+client.on('roleCreate', async role => {
+  if (dev) console.log('[ROLE CREATE]', role.name, role.id);
+  const embed = new EmbedBuilder()
+    .setTitle('Rang létrehozva')
+    .setDescription(`Rang: **${role.name}** (ID: ${role.id})`)
+    .setColor('Green')
+    .setTimestamp();
+  client.logGuildChange(role.guild.id, embed);
+}
+);
+
+
+// Log member role changes (now: Rang változás)
+client.on('guildMemberUpdate', async (oldMember, newMember) => {
+  if (!oldMember.guild) return;
+  const oldRoles = new Set(oldMember.roles.cache.keys());
+  const newRoles = new Set(newMember.roles.cache.keys());
+  const added = [...newRoles].filter(x => !oldRoles.has(x));
+  const removed = [...oldRoles].filter(x => !newRoles.has(x));
+  if (added.length > 0 || removed.length > 0) {
+    let desc = '';
+    if (added.length > 0) desc += `Hozzáadott rang(ok): ${added.map(rid => `<@&${rid}>`).join(', ')}\n`;
+    if (removed.length > 0) desc += `Eltávolított rang(ok): ${removed.map(rid => `<@&${rid}>`).join(', ')}\n`;
+    const embed = new EmbedBuilder()
+      .setTitle('Rang változás')
+      .setDescription(`Felhasználó: <@${newMember.id}>\n${desc}`)
+      .setColor('Blue')
+      .setTimestamp();
+    client.logGuildChange(newMember.guild.id, embed);
+  }
+});
+
 client.login(config.token);
+
+// --- GLOBAL ERROR HANDLING: Never exit the bot on error ---
+process.on('uncaughtException', (err) => {
+  console.error('[UNCAUGHT EXCEPTION]', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[UNHANDLED REJECTION]', reason);
+});
