@@ -24,7 +24,8 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('Üzenetek törölve')
       .setDescription(`${amount} üzenet törölve ebben a csatornában.`)
-      .setColor('Orange');
+      .setColor('Orange')
+      .setFooter({ text: '⛏️ by Laci 🛠️' });
     await interaction.reply({ embeds: [embed], ephemeral: true });
   },
 };

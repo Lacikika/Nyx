@@ -44,7 +44,8 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('Felhasználó kitiltva')
       .setDescription(`${member.user.tag} ki lett tiltva.`)
-      .setColor('Orange');
+      .setColor('Orange')
+      .setFooter({ text: '⛏️ by Laci 🛠️' });
     interaction.client.logToGuildChannel(guildId, embed);
     await interaction.reply({ embeds: [embed] });
 

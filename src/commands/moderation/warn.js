@@ -43,7 +43,8 @@ module.exports = {
       .setTitle('Felhasználó figyelmeztetve')
       .setDescription(`${user.tag} figyelmeztetést kapott.`)
       .addFields({ name: 'Indok', value: reason })
-      .setColor('Orange');
+      .setColor('Orange')
+      .setFooter({ text: '⛏️ by Laci 🛠️' });
     await interaction.reply({ embeds: [embed] });
   },
 };

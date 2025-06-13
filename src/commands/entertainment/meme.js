@@ -22,7 +22,7 @@ module.exports = {
             .setImage(memeUrl)
             .setURL(meme.postLink || memeUrl)
             .setColor('Random')
-            .setFooter({ text: 'Jó szórakozást! 😄' })
+            .setFooter({ text: '⛏️ by Laci 🛠️' })
             .setTimestamp();
           await interaction.reply({ embeds: [embed] });
           

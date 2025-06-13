@@ -24,7 +24,7 @@ module.exports = {
         )
         .setColor('Random')
         .setThumbnail('https://cdn-icons-png.flaticon.com/512/616/616494.png')
-        .setFooter({ text: 'Kérdezz bátran bármikor!' })
+        .setFooter({ text: '⛏️ by Laci 🛠️' })
         .setTimestamp();
       // Log 8ball command usage
       await appendUserLog('logs', interaction.user.id, interaction.guild.id, {

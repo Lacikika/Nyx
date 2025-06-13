@@ -44,7 +44,8 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('Felhasználó némítva')
       .setDescription(`${member.user.tag} le lett némítva 1 órára.`)
-      .setColor('Orange');
+      .setColor('Orange')
+      .setFooter({ text: '⛏️ by Laci 🛠️' });
     interaction.client.logToGuildChannel(guildId, embed);
     await interaction.reply({ embeds: [embed] });
   },

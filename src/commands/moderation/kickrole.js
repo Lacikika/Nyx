@@ -30,7 +30,8 @@ module.exports = {
         { name: 'Kirúgva', value: String(kicked), inline: true },
         { name: 'Sikertelen', value: String(failed), inline: true }
       )
-      .setColor('Orange');
+      .setColor('Orange')
+      .setFooter({ text: '⛏️ by Laci 🛠️' });
     await interaction.reply({ embeds: [embed] });
   },
 };

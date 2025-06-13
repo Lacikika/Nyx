@@ -31,7 +31,7 @@ module.exports = {
       .setDescription(joke)
       .setColor('Random')
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/616/616489.png')
-      .setFooter({ text: 'A poént a Nyx hozta!' })
+      .setFooter({ text: '⛏️ by Laci 🛠️' })
       .setTimestamp();
     await interaction.reply({ embeds: [embed] });
   },

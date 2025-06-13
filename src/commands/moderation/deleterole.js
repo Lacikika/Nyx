@@ -27,7 +27,7 @@ module.exports = {
       .setDescription(`Felhasználó: <@${user.id}>\nTörlendő rang: <@&${role.id}>\nIndok: ${reason}`)
       .addFields({ name: 'Kérelmezte', value: `<@${interaction.user.id}>`, inline: true })
       .setColor('Orange')
-      .setFooter({ text: '⛏️ by Laci🛠️' })
+      .setFooter({ text: '⛏️ by Laci 🛠️' })
       .setTimestamp();
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('deleterole_accept').setEmoji('✅').setStyle(ButtonStyle.Success),
