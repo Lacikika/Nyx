@@ -14,6 +14,10 @@ module.exports = {
     const reason = interaction.options.getString('reason');
     const guildId = interaction.guild.id;
     const config = await readUser('guilds', guildId, guildId);
+    const requestRoles = config.requestRoles || [];
+    if (requestRoles.length > 0 && !interaction.member.roles.cache.some(r => requestRoles.includes(r.id))) {
+      return interaction.reply({ content: 'Nincs jogosultságod rang törlésének kérelmezéséhez. Csak a kijelölt rang kérelmező rangok tagjai kérhetnek rang törlést.', ephemeral: true });
+    }
     const staffRoles = config.staffRoles || (config.staffRole ? [config.staffRole] : []);
     const deleteChannelId = config.deleteroleChannel;
     const cooldownRoleId = config.roleCooldown;
@@ -74,10 +78,11 @@ module.exports = {
             until: Date.now() + cooldownDays * 24 * 60 * 60 * 1000
           };
           await writeUser('profiles', user.id, guildId, profile);
-          await role.delete('Staff által jóváhagyott törlés');
+          // NEM töröljük a rangot a szerverről, csak levesszük a felhasználóról
+          await msg.delete().catch(() => {});
           const approveEmbed = new EmbedBuilder()
-            .setTitle('✅ Rang törölve')
-            .setDescription(`Felhasználó: <@${user.id}>\nTörölt rang: <@&${role.id}>\nIndok: ${reason}`)
+            .setTitle('✅ Rang eltávolítva a felhasználóról')
+            .setDescription(`Felhasználó: <@${user.id}>\nEltávolított rang: <@&${role.id}>\nIndok: ${reason}`)
             .addFields(
               { name: 'Staff indok', value: `${m.content}\n**Staff:** <@${i.user.id}>` },
               { name: 'Kérelmezte', value: `<@${interaction.user.id}>`, inline: true },
@@ -88,6 +93,8 @@ module.exports = {
             .setTimestamp();
           await deleteChannel.send({ embeds: [approveEmbed] });
         } else {
+          await msg.edit({ embeds: [embed.setColor('Red').setFooter({ text: `Elutasította: ${i.user.tag} | Indok: ${m.content}` })], components: [] });
+          await msg.delete().catch(() => {});
           const declineEmbed = new EmbedBuilder()
             .setTitle('❌ Rang törlés elutasítva')
             .setDescription(`Felhasználó: <@${user.id}>\nTörlendő rang: <@&${role.id}>\nIndok: ${reason}`)

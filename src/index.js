@@ -308,3 +308,68 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('[UNHANDLED REJECTION]', reason);
 });
+
+// --- Console commands: restart, stop, say ---
+const readline = require('readline');
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+rl.on('line', async (input) => {
+  const cmd = input.trim();
+  if (cmd === 'restart') {
+    console.log('[BOT] Restarting...');
+    process.exit(2); // Use exit code 2 for restart (use a process manager for auto-restart)
+  } else if (cmd === 'stop') {
+    console.log('[BOT] Stopping...');
+    process.exit(0);
+  } else if (cmd.startsWith('say ')) {
+    const msg = cmd.slice(4).trim();
+    if (!msg) return console.log('[BOT] Nincs üzenet.');
+    try {
+      if (config.logChannelId) {
+        const channel = await client.channels.fetch(config.logChannelId);
+        if (channel && channel.isTextBased()) {
+          await channel.send(msg);
+          console.log('[BOT] Üzenet elküldve a log csatornába.');
+        } else {
+          console.log('[BOT] A log csatorna nem szöveges típusú.');
+        }
+      } else {
+        console.log('[BOT] Nincs beállítva logChannelId a configban.');
+      }
+    } catch (e) {
+      console.error('[BOT] Nem sikerült elküldeni az üzenetet:', e);
+    }
+  } else if (cmd.startsWith('broadcast ')) {
+    const type = cmd.slice(10).trim().toLowerCase();
+    let message;
+    if (type === 'stop') {
+      message = ':octagonal_sign: **A bot teljesen leáll!** Minden funkció szünetel.';
+    } else if (type === 'dev') {
+      message = ':hammer_and_wrench: **A bot fejlesztési módban van!** Előfordulhatnak hibák vagy újraindítások.';
+    } else if (type === 'restart') {
+      message = ':arrows_counterclockwise: **A bot újraindul!** Kérjük, várj néhány másodpercet.';
+    } else {
+      return console.log('[BOT] Ismeretlen broadcast típus. Használat: broadcast <full stop|development|restart>');
+    }
+    try {
+      const guilds = client.guilds.cache;
+      let count = 0;
+      for (const [guildId] of guilds) {
+        const config = await readUser('guilds', guildId, guildId);
+        if (config && config.logChannel) {
+          try {
+            const channel = await client.channels.fetch(config.logChannel);
+            if (channel && channel.isTextBased()) {
+              await channel.send(message);
+              count++;
+            }
+          } catch {}
+        }
+      }
+      console.log(`[BOT] Broadcast elküldve ${count} szerver log csatornájába.`);
+    } catch (e) {
+      console.error('[BOT] Broadcast hiba:', e);
+    }
+  } else {
+    console.log('[BOT] Ismeretlen parancs:', cmd);
+  }
+});

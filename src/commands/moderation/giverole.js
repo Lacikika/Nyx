@@ -14,6 +14,10 @@ module.exports = {
     const reason = interaction.options.getString('reason');
     const guildId = interaction.guild.id;
     const config = await readUser('guilds', guildId, guildId);
+    const requestRoles = config.requestRoles || [];
+    if (requestRoles.length > 0 && !interaction.member.roles.cache.some(r => requestRoles.includes(r.id))) {
+      return interaction.reply({ content: 'Nincs jogosultságod rang kérelmezéséhez. Csak a kijelölt rang kérelmező rangok tagjai kérhetnek rangot.', ephemeral: true });
+    }
     const staffRoles = config.staffRoles || (config.staffRole ? [config.staffRole] : []);
     const logChannelId = config.rolesChannel || config.logChannel;
     const cooldownRoleId = config.roleCooldown;
@@ -64,6 +68,7 @@ module.exports = {
           const targetMember = await interaction.guild.members.fetch(user.id);
           await targetMember.roles.add(role);
           await msg.edit({ embeds: [embed.setColor('Green').setFooter({ text: `Elfogadta: ${i.user.tag} | Indok: ${m.content}` })], components: [] });
+          await msg.delete().catch(() => {});
           const approveEmbed = new EmbedBuilder()
             .setTitle('✅ Rang kiosztva')
             .setDescription(`Felhasználó: <@${user.id}>\nRang: <@&${role.id}>\nIndok: ${reason}`)
@@ -77,6 +82,7 @@ module.exports = {
           await logChannel.send({ embeds: [approveEmbed] });
         } else {
           await msg.edit({ embeds: [embed.setColor('Red').setFooter({ text: `Elutasította: ${i.user.tag} | Indok: ${m.content}` })], components: [] });
+          await msg.delete().catch(() => {});
           const declineEmbed = new EmbedBuilder()
             .setTitle('❌ Rang elutasítva')
             .setDescription(`Felhasználó: <@${user.id}>\nRang: <@&${role.id}>\nIndok: ${reason}`)

@@ -10,11 +10,19 @@ module.exports = {
     .addChannelOption(opt =>
       opt.setName('roleschannel').setDescription('Set roles approval channel').setRequired(false))
     .addChannelOption(opt =>
-      opt.setName('deleterolechannel').setDescription('Set role delete approval channel').setRequired(false))
+      opt.setName('deleterolechannel').setDescription('Rang törlő csatorna').setRequired(false))
     .addRoleOption(opt =>
       opt.setName('staffrole').setDescription('Add a staff role for moderation').setRequired(false))
     .addStringOption(opt =>
-      opt.setName('addstaffrole').setDescription('További staff szerep ID-k (vesszővel elválasztva)').setRequired(false)),
+      opt.setName('addstaffrole').setDescription('További staff szerep ID-k (vesszővel elválasztva)').setRequired(false))
+    .addRoleOption(opt =>
+      opt.setName('requestrole').setDescription('Rang kérelmező rang hozzáadása').setRequired(false))
+    .addStringOption(opt =>
+      opt.setName('addrequestrole').setDescription('További kérelmező rang ID-k (vesszővel elválasztva)').setRequired(false))
+    .addRoleOption(opt =>
+      opt.setName('rolecooldown').setDescription('Cooldown rang (ideiglenes tiltás)').setRequired(false))
+    .addRoleOption(opt =>
+      opt.setName('viprole').setDescription('VIP rang').setRequired(false)),
   async execute(interaction) {
     try {
       if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
@@ -29,6 +37,8 @@ module.exports = {
       const staffRole = interaction.options.getRole('staffrole');
       const addStaffRole = interaction.options.getString('addstaffrole');
       const roleCooldown = interaction.options.getRole('rolecooldown');
+      const requestRole = interaction.options.getRole('requestrole');
+      const addRequestRole = interaction.options.getString('addrequestrole');
       if (logChannel) config.logChannel = logChannel.id;
       if (rolesChannel) config.rolesChannel = rolesChannel.id;
       if (deleteroleChannel) config.deleteroleChannel = deleteroleChannel.id;
@@ -40,6 +50,13 @@ module.exports = {
       if (addStaffRole) {
         const ids = addStaffRole.split(',').map(s => s.trim()).filter(Boolean);
         for (const id of ids) if (!config.staffRoles.includes(id)) config.staffRoles.push(id);
+      }
+      // Requester roles support
+      if (!config.requestRoles) config.requestRoles = [];
+      if (requestRole && !config.requestRoles.includes(requestRole.id)) config.requestRoles.push(requestRole.id);
+      if (addRequestRole) {
+        const ids = addRequestRole.split(',').map(s => s.trim()).filter(Boolean);
+        for (const id of ids) if (!config.requestRoles.includes(id)) config.requestRoles.push(id);
       }
       await writeUser('guilds', guildId, guildId, config);
       // Log guildconfig command usage
