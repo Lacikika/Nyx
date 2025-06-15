@@ -9,10 +9,10 @@ module.exports = {
     .addUserOption(option =>
       option.setName('target').setDescription('User to ban').setRequired(true)),
   async execute(interaction) {
-    if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
+    if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers) && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
       const embed = new EmbedBuilder()
         .setTitle('Nincs jogosultság')
-        .setDescription('Nincs jogosultságod a kitiltáshoz.')
+        .setDescription('Ehhez a parancshoz Ban Members vagy Admin jogosultság szükséges.')
         .setColor('Red');
       return interaction.reply({ embeds: [embed], flags: 64 });
     }

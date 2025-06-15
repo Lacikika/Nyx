@@ -7,8 +7,8 @@ module.exports = {
     .addRoleOption(option =>
       option.setName('role').setDescription('Role to kick').setRequired(true)),
   async execute(interaction) {
-    if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
-      return interaction.reply({ content: 'You do not have permission to kick members.', ephemeral: true });
+    if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers) && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return interaction.reply({ content: 'Ehhez a parancshoz Kick Members vagy Admin jogosultság szükséges.', ephemeral: true });
     }
     const role = interaction.options.getRole('role');
     if (!role) return interaction.reply({ content: 'Role not found.', ephemeral: true });

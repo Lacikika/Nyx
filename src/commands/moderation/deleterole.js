@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { readUser, writeUser } = require('../../../utils/jsondb');
+const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -111,5 +113,18 @@ module.exports = {
         await i.followUp({ content: 'Nem érkezett indok, a rang nem került törlésre/elutasítva.', ephemeral: true });
       }
     });
+    // Jogosultság-ellenőrzés: csak staff vagy ManageRoles jogosultsággal
+    if (!interaction.member.permissions.has(PermissionFlagsBits.ManageRoles) && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return interaction.reply({ content: 'Ehhez a parancshoz Manage Roles vagy Admin jogosultság szükséges!', ephemeral: true });
+    }
+    // Naplózás minden rangkérelemről saját jsondb-vel
+    await appendUserLog('role_requests', interaction.user.id, guildId, {
+      type: 'deleterole',
+      staff: interaction.user.id,
+      target: user.id,
+      role: role.id,
+      reason,
+      date: Date.now()
+    }, interaction.user.username);
   }
 };

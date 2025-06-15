@@ -9,10 +9,10 @@ module.exports = {
     .addIntegerOption(option =>
       option.setName('amount').setDescription('Number of messages to delete').setRequired(true)),
   async execute(interaction) {
-    if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+    if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages) && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
       const embed = new EmbedBuilder()
         .setTitle('Nincs jogosultság')
-        .setDescription('Nincs jogosultságod az üzenetek törléséhez.')
+        .setDescription('Ehhez a parancshoz Manage Messages vagy Admin jogosultság szükséges.')
         .setColor('Red');
       return interaction.reply({ embeds: [embed], flags: 64 });
     }

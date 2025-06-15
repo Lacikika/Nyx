@@ -11,10 +11,10 @@ module.exports = {
     .addStringOption(option =>
       option.setName('reason').setDescription('Reason for warning').setRequired(false)),
   async execute(interaction) {
-    if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
+    if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers) && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
       const embed = new EmbedBuilder()
         .setTitle('Nincs jogosultság')
-        .setDescription('Nincs jogosultságod a figyelmeztetéshez.')
+        .setDescription('Ehhez a parancshoz Kick Members vagy Admin jogosultság szükséges.')
         .setColor('Red');
       return interaction.reply({ embeds: [embed], flags: 64 });
     }

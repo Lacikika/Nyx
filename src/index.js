@@ -50,13 +50,25 @@ for (const file of eventFiles) {
 }
 
 // --- Logging helpers ---
-client.logGuildChange = async function(guildId, embed) {
+client.logGuildChange = async function(guildId, embed, actionType) {
   // Always log to the guild's log channel if set
   const config = await readUser('guilds', guildId, guildId);
   if (config && config.logChannel) {
     try {
       const channel = await client.channels.fetch(config.logChannel);
       if (channel && channel.isTextBased()) {
+        // Audit log integráció
+        let auditInfo = '';
+        if (actionType && channel.guild && channel.guild.fetchAuditLogs) {
+          try {
+            const logs = await channel.guild.fetchAuditLogs({ type: actionType, limit: 1 });
+            const entry = logs.entries.first();
+            if (entry) {
+              auditInfo = `\n**Audit log:** ${entry.executor?.tag || entry.executor?.id} (${entry.action})`; 
+            }
+          } catch {}
+        }
+        if (auditInfo) embed.setDescription((embed.data.description || '') + auditInfo);
         await channel.send({ embeds: [embed] });
       }
     } catch (e) { if (dev) console.error('[LOG GUILD CHANGE ERROR]', e); }
@@ -301,12 +313,45 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 
 client.login(config.token);
 
+// --- Automatikus parancs regisztráció (induláskor) ---
+if (process.env.AUTO_REGISTER_COMMANDS === 'true') {
+  const { exec } = require('child_process');
+  exec('node ./scripts/register-commands.js', (err, stdout, stderr) => {
+    if (err) {
+      console.error('[COMMAND REGISTER ERROR]', err);
+    } else {
+      console.log('[COMMAND REGISTER]', stdout);
+      if (stderr) console.error('[COMMAND REGISTER STDERR]', stderr);
+    }
+  });
+}
+
 // --- GLOBAL ERROR HANDLING: Never exit the bot on error ---
 process.on('uncaughtException', (err) => {
   console.error('[UNCAUGHT EXCEPTION]', err);
+  if (config.errorLogChannel) {
+    (async () => {
+      try {
+        const channel = await client.channels.fetch(config.errorLogChannel);
+        if (channel && channel.isTextBased()) {
+          await channel.send({ content: `**[UNCAUGHT EXCEPTION]**\n\n${err?.stack || err}` });
+        }
+      } catch (e) { console.error('[ERRORLOG SEND ERROR]', e); }
+    })();
+  }
 });
 process.on('unhandledRejection', (reason, promise) => {
   console.error('[UNHANDLED REJECTION]', reason);
+  if (config.errorLogChannel) {
+    (async () => {
+      try {
+        const channel = await client.channels.fetch(config.errorLogChannel);
+        if (channel && channel.isTextBased()) {
+          await channel.send({ content: `**[UNHANDLED REJECTION]**\n\n${reason?.stack || reason}` });
+        }
+      } catch (e) { console.error('[ERRORLOG SEND ERROR]', e); }
+    })();
+  }
 });
 
 // --- Console commands: restart, stop, say ---
