@@ -3,7 +3,7 @@ const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require('discord
 const config = require('./config');
 const fs = require('fs');
 const { addXp } = require('../utils/rank');
-const { readUser, writeUser } = require('../utils/jsondb');
+const { readUser, writeUser, appendGuildLog } = require('../utils/jsondb');
 let fetch;
 (async () => {
   fetch = (await import('node-fetch')).default;
@@ -161,6 +161,12 @@ client.on('roleCreate', async role => {
     .setColor('Green')
     .setTimestamp();
   client.logGuildChange(role.guild.id, embed);
+  await appendGuildLog(role.guild.id, {
+    event_type: 'ROLE_CREATE',
+    roleId: role.id,
+    roleName: role.name,
+    date: Date.now()
+  });
 });
 
 client.on('roleDelete', async role => {
@@ -171,6 +177,12 @@ client.on('roleDelete', async role => {
     .setColor('Red')
     .setTimestamp();
   client.logGuildChange(role.guild.id, embed);
+  await appendGuildLog(role.guild.id, {
+    event_type: 'ROLE_DELETE',
+    roleId: role.id,
+    roleName: role.name,
+    date: Date.now()
+  });
 });
 
 client.on('roleUpdate', async (oldRole, newRole) => {
@@ -182,6 +194,13 @@ client.on('roleUpdate', async (oldRole, newRole) => {
       .setColor('Orange')
       .setTimestamp();
     client.logGuildChange(newRole.guild.id, embed);
+    await appendGuildLog(newRole.guild.id, {
+      event_type: 'ROLE_UPDATE',
+      roleId: newRole.id,
+      oldName: oldRole.name,
+      newName: newRole.name,
+      date: Date.now()
+    });
   }
 });
 
@@ -193,6 +212,14 @@ client.on('channelCreate', async channel => {
     .setColor('Green')
     .setTimestamp();
   if (channel.guild) client.logGuildChange(channel.guild.id, embed);
+  if (channel.guild) {
+    await appendGuildLog(channel.guild.id, {
+      event_type: 'CHANNEL_CREATE',
+      channel_id: channel.id,
+      channel_name: channel.name,
+      date: Date.now()
+    });
+  }
 });
 
 client.on('channelDelete', async channel => {
@@ -203,6 +230,14 @@ client.on('channelDelete', async channel => {
     .setColor('Red')
     .setTimestamp();
   if (channel.guild) client.logGuildChange(channel.guild.id, embed);
+  if (channel.guild) {
+    await appendGuildLog(channel.guild.id, {
+      event_type: 'CHANNEL_DELETE',
+      channel_id: channel.id,
+      channel_name: channel.name,
+      date: Date.now()
+    });
+  }
 });
 
 client.on('channelUpdate', async (oldChannel, newChannel) => {
@@ -214,6 +249,15 @@ client.on('channelUpdate', async (oldChannel, newChannel) => {
       .setColor('Orange')
       .setTimestamp();
     if (newChannel.guild) client.logGuildChange(newChannel.guild.id, embed);
+    if (newChannel.guild) {
+      await appendGuildLog(newChannel.guild.id, {
+        event_type: 'CHANNEL_UPDATE',
+        channel_id: newChannel.id,
+        old_name: oldChannel.name,
+        new_name: newChannel.name,
+        date: Date.now()
+      });
+    }
   }
 });
 
@@ -269,6 +313,19 @@ client.on('messageCreate', async message => {
     .setColor('Blue')
     .setTimestamp();
   client.logToGuildChannel(message.guild.id, embed);
+
+  // Log message to guild log
+  if (message.guild) {
+    await appendGuildLog(message.guild.id, {
+      event_type: 'MESSAGE_CREATE',
+      userId: message.author.id,
+      username: message.author.tag,
+      channel_id: message.channel.id,
+      message_id: message.id,
+      message_content: message.content,
+      date: Date.now()
+    });
+  }
 });
 
 // Log message deletions
@@ -283,20 +340,33 @@ client.on('messageDelete', async message => {
     .setColor('Red')
     .setTimestamp();
   client.logGuildChange(message.guild.id, embed);
+
+  if (message.guild) {
+    await appendGuildLog(message.guild.id, {
+      event_type: 'MESSAGE_DELETE',
+      userId: message.author?.id,
+      username: message.author?.tag,
+      channel_id: message.channel.id,
+      message_id: message.id,
+      message_content: message.content,
+      date: Date.now()
+    });
+  }
 });
 
-// Log role creation (now: Rang létrehozva)
-client.on('roleCreate', async role => {
-  if (dev) console.log('[ROLE CREATE]', role.name, role.id);
-  const embed = new EmbedBuilder()
-    .setTitle('Rang létrehozva')
-    .setDescription(`Rang: **${role.name}** (ID: ${role.id})`)
-    .setColor('Green')
-    .setTimestamp();
-  client.logGuildChange(role.guild.id, embed);
-}
-);
-
+client.on('messageUpdate', async (oldMessage, newMessage) => {
+  if (!oldMessage.guild) return;
+  await appendGuildLog(oldMessage.guild.id, {
+    event_type: 'MESSAGE_UPDATE',
+    userId: oldMessage.author?.id,
+    username: oldMessage.author?.tag,
+    channel_id: oldMessage.channel.id,
+    message_id: oldMessage.id,
+    old_content: oldMessage.content,
+    new_content: newMessage.content,
+    date: Date.now()
+  });
+});
 
 // Log member role changes (now: Rang változás)
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
@@ -315,6 +385,14 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
       .setColor('Blue')
       .setTimestamp();
     client.logGuildChange(newMember.guild.id, embed);
+    await appendGuildLog(newMember.guild.id, {
+      event_type: 'ROLE_UPDATE',
+      userId: newMember.id,
+      username: newMember.user?.tag,
+      added_roles: added,
+      removed_roles: removed,
+      date: Date.now()
+    });
   }
 });
 

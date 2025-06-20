@@ -12,6 +12,14 @@ module.exports = {
     if (!logs.length) {
       return interaction.reply({ content: 'Nincsenek naplók ehhez a szerverhez.', ephemeral: true });
     }
+    // Check if user has Administrator permission or a staff role
+    const member = await interaction.guild.members.fetch(interaction.user.id);
+    const hasAdmin = member.permissions.has('Administrator');
+    const staffRoleIds = ['STAFF_ROLE_ID_1', 'STAFF_ROLE_ID_2']; // Replace with actual staff role IDs
+    const hasStaffRole = member.roles.cache.some(role => staffRoleIds.includes(role.id));
+    if (!hasAdmin && !hasStaffRole) {
+      return interaction.reply({ content: 'Nincs jogosultságod ehhez a parancshoz.', ephemeral: true });
+    }
     let page = 0;
     const pageSize = 5;
     const getPageEmbed = (page) => {
