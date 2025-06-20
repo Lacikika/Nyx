@@ -96,6 +96,7 @@ client.logToChannel = async function(embed) {
 // Helper: log to channel (uses guild config)
 client.logToGuildChannel = async function(guildId, embed) {
   if (dev) console.log('[LOG TO GUILD CHANNEL]', guildId, embed?.data?.title || '', embed?.data?.description || '', embed);
+  embed.setFooter({ text: '⛏️ by Laci 🛠️' });
   const config = await readUser('guilds', guildId, guildId);
   if (!config.logChannel) return;
   try {
@@ -234,10 +235,16 @@ client.on('messageCreate', async message => {
     const data = await resp.json();
     if (dev) console.log('[AUTOMOD API RESULT]', JSON.stringify(data));
     // If inappropriate (profanity, personal, sexual, etc.), just delete the message
-    if ((data.profanity && Array.isArray(data.profanity.matches) && data.profanity.matches.length > 0) ||
-        (data.personal && Array.isArray(data.personal.matches) && data.personal.matches.length > 0) ||
-        (data.sexual && Array.isArray(data.sexual.matches) && data.sexual.matches.length > 0) ||
-        (data.insult && Array.isArray(data.insult.matches) && data.insult.matches.length > 0)) {
+    const hasProfanity = data.profanity && Array.isArray(data.profanity.matches) && data.profanity.matches.length > 0;
+    const hasSexual = data.sexual && Array.isArray(data.sexual.matches) && data.sexual.matches.length > 0;
+    const hasInsult = data.insult && Array.isArray(data.insult.matches) && data.insult.matches.length > 0;
+    let hasPersonal = false;
+    if (data.personal && Array.isArray(data.personal.matches) && data.personal.matches.length > 0) {
+      // Csak akkor törölj, ha NEM csak @here vagy @everyone a találat
+      const nonMention = data.personal.matches.filter(m => m.match !== '@here' && m.match !== '@everyone');
+      if (nonMention.length > 0) hasPersonal = true;
+    }
+    if (hasProfanity || hasPersonal || hasSexual || hasInsult) {
       try { await message.delete(); } catch {}
       return;
     }
