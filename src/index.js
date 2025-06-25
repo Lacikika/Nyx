@@ -266,36 +266,6 @@ client.on('messageCreate', async message => {
   client.logAllMessagesToConsole(message);
   if (message.author.bot || !message.guild) return;
   if (dev) console.log('[MESSAGE]', message.author?.tag, message.content);
-
-  // --- Auto-moderation: Check message with free text moderation API ---
-  try {
-    const resp = await fetch('https://api.sightengine.com/1.0/text/check.json?lang=en&mode=standard&api_user=1404875704&api_secret=UbMDBaF2SsaY9jg8nH7bwuGAktwjPNsB', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        text: message.content
-      })
-    });
-    const data = await resp.json();
-    if (dev) console.log('[AUTOMOD API RESULT]', JSON.stringify(data));
-    // If inappropriate (profanity, personal, sexual, etc.), just delete the message
-    const hasProfanity = data.profanity && Array.isArray(data.profanity.matches) && data.profanity.matches.length > 0;
-    const hasSexual = data.sexual && Array.isArray(data.sexual.matches) && data.sexual.matches.length > 0;
-    const hasInsult = data.insult && Array.isArray(data.insult.matches) && data.insult.matches.length > 0;
-    let hasPersonal = false;
-    if (data.personal && Array.isArray(data.personal.matches) && data.personal.matches.length > 0) {
-      // Csak akkor törölj, ha NEM csak @here vagy @everyone a találat
-      const nonMention = data.personal.matches.filter(m => m.match !== '@here' && m.match !== '@everyone');
-      if (nonMention.length > 0) hasPersonal = true;
-    }
-    if (hasProfanity || hasPersonal || hasSexual || hasInsult) {
-      try { await message.delete(); } catch {}
-      return;
-    }
-  } catch (e) {
-    if (dev) console.error('[AUTOMOD ERROR]', e);
-  }
-
   // Award random XP (e.g. 10-20 per message) with role bonus
   const xp = Math.floor(Math.random() * 11) + 10;
   const { level, leveledUp, bonus } = await addXp(message.author.id, message.guild.id, xp, client);
@@ -313,19 +283,6 @@ client.on('messageCreate', async message => {
     .setColor('Blue')
     .setTimestamp();
   client.logToGuildChannel(message.guild.id, embed);
-
-  // Log message to guild log
-  if (message.guild) {
-    await appendGuildLog(message.guild.id, {
-      event_type: 'MESSAGE_CREATE',
-      userId: message.author.id,
-      username: message.author.tag,
-      channel_id: message.channel.id,
-      message_id: message.id,
-      message_content: message.content,
-      date: Date.now()
-    });
-  }
 });
 
 // Log message deletions
