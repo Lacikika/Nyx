@@ -3,8 +3,8 @@ const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('guildconfig')
-    .setDescription('Configure guild settings')
+    .setName('szerverbeallitas')
+    .setDescription('Szerver beallitasok konfiguracioja  ')
     .addChannelOption(opt =>
       opt.setName('logchannel').setDescription('Set log channel').setRequired(false))
     .addChannelOption(opt =>
@@ -20,9 +20,9 @@ module.exports = {
     .addStringOption(opt =>
       opt.setName('addrequestrole').setDescription('További kérelmező rang ID-k (vesszővel elválasztva)').setRequired(false))
     .addRoleOption(opt =>
-      opt.setName('rolecooldown').setDescription('Cooldown rang (ideiglenes tiltás)').setRequired(false))
-    .addRoleOption(opt =>
-      opt.setName('viprole').setDescription('VIP rang').setRequired(false)),
+      opt.setName('rolecooldown').setDescription('Cooldown rang (ideiglenes tiltás)').setRequired(false)),
+    // .addRoleOption(opt =>
+    //   opt.setName('viprole').setDescription('VIP rang').setRequired(false))
   async execute(interaction) {
     try {
       if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
@@ -33,7 +33,7 @@ module.exports = {
       const logChannel = interaction.options.getChannel('logchannel');
       const rolesChannel = interaction.options.getChannel('roleschannel');
       const deleteroleChannel = interaction.options.getChannel('deleterolechannel');
-      const vipRole = interaction.options.getRole('viprole');
+      // const vipRole = interaction.options.getRole('viprole');
       const staffRole = interaction.options.getRole('staffrole');
       const addStaffRole = interaction.options.getString('addstaffrole');
       const roleCooldown = interaction.options.getRole('rolecooldown');
@@ -42,7 +42,7 @@ module.exports = {
       if (logChannel) config.logChannel = logChannel.id;
       if (rolesChannel) config.rolesChannel = rolesChannel.id;
       if (deleteroleChannel) config.deleteroleChannel = deleteroleChannel.id;
-      if (vipRole) config.vipRole = vipRole.id;
+      // if (vipRole) config.vipRole = vipRole.id;
       if (roleCooldown) config.roleCooldown = roleCooldown.id;
       // Multi-staff role support
       if (!config.staffRoles) config.staffRoles = [];
@@ -76,7 +76,7 @@ module.exports = {
           { name: 'Napló csatorna', value: logChannel ? `<#${logChannel.id}>` : (config.logChannel ? `<#${config.logChannel}>` : 'Nincs beállítva'), inline: true },
           { name: 'Rang jóváhagyó csatorna', value: rolesChannel ? `<#${rolesChannel.id}>` : (config.rolesChannel ? `<#${config.rolesChannel}>` : 'Nincs beállítva'), inline: true },
           { name: 'Rang törlő csatorna', value: deleteroleChannel ? `<#${deleteroleChannel.id}>` : (config.deleteroleChannel ? `<#${config.deleteroleChannel}>` : 'Nincs beállítva'), inline: true },
-          { name: 'VIP rang', value: vipRole ? `<@&${vipRole.id}>` : (config.vipRole ? `<@&${config.vipRole}>` : 'Nincs beállítva'), inline: true },
+          // { name: 'VIP rang', value: vipRole ? `<@&${vipRole.id}>` : (config.vipRole ? `<@&${config.vipRole}>` : 'Nincs beállítva'), inline: true },
           { name: 'Staff rang', value: staffRole ? `<@&${staffRole.id}>` : (config.staffRole ? `<@&${config.staffRole}>` : 'Nincs beállítva'), inline: true },
           { name: 'Cooldown rang', value: roleCooldown ? `<@&${roleCooldown.id}>` : (config.roleCooldown ? `<@&${config.roleCooldown}>` : 'Nincs beállítva'), inline: true }
         )

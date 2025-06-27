@@ -2,8 +2,8 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('rules')
-    .setDescription('GTA HC RP Teljes Szabálykönyv – Főiskolai szintű változat'),
+    .setName('szabalyok')
+    .setDescription('GTA HC RP teljes szabalykonyv  '),
   async execute(interaction) {
     const embed = new EmbedBuilder()
       .setTitle('GTA HC RP Teljes Szabálykönyv – Főiskolai szintű változat')

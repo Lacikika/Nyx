@@ -11,8 +11,8 @@ const jokes = [
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('joke')
-    .setDescription('Get a random joke'),
+    .setName('vicc')
+    .setDescription('Veletlen vicc  '),
   async execute(interaction) {
     const joke = jokes[Math.floor(Math.random() * jokes.length)];
     // Log joke command usage

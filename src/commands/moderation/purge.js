@@ -5,7 +5,7 @@ const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('purge')
-    .setDescription('Delete a number of messages from a channel')
+    .setDescription('Uzenetek torlese egy csatornabol  ')
     .addIntegerOption(option =>
       option.setName('amount').setDescription('Number of messages to delete').setRequired(true)),
   async execute(interaction) {

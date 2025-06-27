@@ -3,7 +3,7 @@ const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('disc
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('kickrole')
-    .setDescription('Kick all members with a specific role')
+    .setDescription('Osszes tag kirugasa egy szerep alapjan  ')
     .addRoleOption(option =>
       option.setName('role').setDescription('Role to kick').setRequired(true)),
   async execute(interaction) {

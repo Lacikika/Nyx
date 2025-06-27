@@ -5,8 +5,8 @@ const path = require('path');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('giverole')
-    .setDescription('Rang jóváhagyás staff által')
+    .setName('rangadas')
+    .setDescription('Rang jovahagyas staff altal  ')
     .addUserOption(opt => opt.setName('user').setDescription('Felhasználó').setRequired(true))
     .addRoleOption(opt => opt.setName('role').setDescription('Rang').setRequired(true))
     .addStringOption(opt => opt.setName('reason').setDescription('Indok').setRequired(true)),

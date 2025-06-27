@@ -5,7 +5,7 @@ const { readGlobalUserLogs } = require('../../../utils/jsondb.js');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('lookupuser')
-    .setDescription('🏴‍☠️ Felhasználó információk lekérdezése')
+    .setDescription('Felhasznalo informaciok lekerdezese  ')
     .addUserOption(option =>
       option.setName('target').setDescription('User to lookup').setRequired(true)),
   async execute(interaction) {

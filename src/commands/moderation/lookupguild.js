@@ -5,7 +5,7 @@ const { readGuildLogs } = require('../../../utils/jsondb.js');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('lookupguild')
-    .setDescription('🏴‍☠️ Szerver információk lekérdezése'),
+    .setDescription('Szerver informaciok lekerdezese  '),
   async execute(interaction) {
     const guildId = interaction.guild.id;
     const logs = await readGuildLogs(guildId);

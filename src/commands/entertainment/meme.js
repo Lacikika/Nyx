@@ -7,7 +7,7 @@ const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('meme')
-    .setDescription('Sends a random meme'),
+    .setDescription('Veletlen mem kuldese  '),
   async execute(interaction) {
     // Fetch meme from API
     https.get('https://meme-api.com/gimme', (res) => {

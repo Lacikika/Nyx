@@ -5,7 +5,7 @@ const { readUser, writeUser } = require('../../../utils/jsondb');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('warn')
-    .setDescription('Warn a member')
+    .setDescription('Tag figyelmeztetese  ')
     .addUserOption(option =>
       option.setName('target').setDescription('User to warn').setRequired(true))
     .addStringOption(option =>

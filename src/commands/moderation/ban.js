@@ -5,7 +5,7 @@ const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('ban')
-    .setDescription('Ban a member from the server')
+    .setDescription('Tag kitiltasa a szerverrol  ')
     .addUserOption(option =>
       option.setName('target').setDescription('User to ban').setRequired(true)),
   async execute(interaction) {
