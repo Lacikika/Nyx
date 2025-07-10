@@ -7,7 +7,7 @@
     "start": "node ./src/index.js",
     "dev": "node --trace-warnings ./src/index.js",
     "reg": "node ./scripts/register-commands.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [],
   "author": "Lacikika",
@@ -16,8 +16,13 @@
   "dependencies": {
     "discord.js": "^14.19.3",
     "dotenv": "^16.5.0",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
     "fetch": "^1.1.0",
     "node-fetch": "^3.3.2",
     "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }

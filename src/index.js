@@ -2,15 +2,19 @@
 const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require('discord.js');
 const config = require('./config');
 const fs = require('fs');
-// const { addXp } = require('../utils/rank');
-// const { readUser, writeUser, appendGuildLog } = require('../utils/jsondb');
+const { readUser, writeUser, appendUserLog, appendGuildLog } = require('../utils/jsondb');
+const logger = require('../utils/logger');
+
+
+// Attach after client is defined
+let client;
 let fetch;
 (async () => {
   fetch = (await import('node-fetch')).default;
 })();
 require('dotenv').config();
 
-const client = new Client({
+client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
@@ -38,7 +42,7 @@ for (const folder of commandFolders) {
   }
 }
 
-// Dynamically load events
+// Dynamically load events (including moderation)
 const eventFiles = fs.readdirSync('./src/events').filter(file => file.endsWith('.js'));
 for (const file of eventFiles) {
   const event = require(`./events/${file}`);
@@ -69,21 +73,6 @@ client.on('interactionCreate', async interaction => {
     }
   }
 });
-
-// Log role, channel, and guild changes removed
-
-// Listen for messages (rank system and logging removed)
-client.on('messageCreate', async message => {
-  if (message.author.bot || !message.guild) return;
-  if (dev) console.log('[MESSAGE]', message.author?.tag, message.content);
-  // ...existing code...
-});
-
-// Log message deletions removed
-
-// Message update logging removed
-
-// Member role change logging removed
 
 client.login(config.token);
 
@@ -298,3 +287,22 @@ rl.on('line', async (input) => {
     console.log('[BOT] Ismeretlen parancs:', cmd);
   }
 });
+
+// Escrow all existing data files on startup (one-time migration)
+try {
+  const { escrowDir } = require('../security/escrow_existing');
+  const dataDir = require('path').join(__dirname, '../data');
+  escrowDir(dataDir);
+  logger.info('[ESCROW] All existing data files escrowed (encrypted)');
+} catch (e) {
+  logger.warn('[ESCROW] Could not escrow existing data:', e.message);
+}
+
+// Start the webpanel if enabled (default: always enabled)
+try {
+  const { startWebPanel } = require('../security/webpanel');
+  startWebPanel(50249);
+  logger.info('[WEBPANEL] Web panel started on http://116.202.112.154:50249/');
+} catch (e) {
+  logger.warn('[WEBPANEL] Could not start web panel:', e.message);
+}

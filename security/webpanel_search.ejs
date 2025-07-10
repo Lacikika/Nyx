@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Keresés eredményei - <%= q %></title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #23272a; color: #eee; }
+    h1 { color: #7289da; }
+    a { color: #43b581; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 0.2em 0; }
+    .back { margin-top: 2em; display: inline-block; }
+  </style>
+</head>
+<body>
+  <h1>Keresés eredményei: <%= q %></h1>
+  <% if (results.length === 0) { %>
+    <p>Nincs találat.</p>
+  <% } else { %>
+    <ul>
+      <% results.forEach(function(r) { %>
+        <li><a href="/data/<%= r.type %>/<%= r.file %>"><%= r.type %>/<%= r.file %></a></li>
+      <% }); %>
+    </ul>
+  <% } %>
+  <a class="back" href="/">&larr; Vissza a főoldalra</a>
+</body>
+</html>

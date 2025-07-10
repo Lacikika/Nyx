@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Escrowed Data Web Panel</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #23272a; color: #eee; }
+    h1 { color: #7289da; }
+    .section { margin-bottom: 2em; }
+    a { color: #43b581; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 0.2em 0; }
+    .searchbar { margin-bottom: 2em; }
+    input[type="text"] { padding: 0.5em; border-radius: 4px; border: none; width: 250px; }
+    button { padding: 0.5em 1em; border-radius: 4px; border: none; background: #7289da; color: #fff; cursor: pointer; }
+    button:hover { background: #5865f2; }
+  </style>
+</head>
+<body>
+  <h1>Escrowed Data Web Panel</h1>
+  <form class="searchbar" action="/search" method="get">
+    <input type="text" name="q" placeholder="Keresés fájlnév vagy ID alapján..." required />
+    <button type="submit">Keresés</button>
+  </form>
+  <div class="section">
+    <h2>Guild Logs</h2>
+    <ul>
+      <% logs.forEach(function(file) { %>
+        <li><a href="/data/logs/<%= file %>"><%= file %></a></li>
+      <% }); %>
+    </ul>
+  </div>
+  <div class="section">
+    <h2>User Profiles</h2>
+    <ul>
+      <% profiles.forEach(function(file) { %>
+        <li><a href="/data/profiles/<%= file %>"><%= file %></a></li>
+      <% }); %>
+    </ul>
+  </div>
+  <div class="section">
+    <h2>Guild Configs</h2>
+    <ul>
+      <% guilds.forEach(function(file) { %>
+        <li><a href="/data/guilds/<%= file %>"><%= file %></a></li>
+      <% }); %>
+    </ul>
+  </div>
+</body>
+</html>

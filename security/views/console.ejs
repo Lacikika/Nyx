@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bot Console Logs</title>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+  <meta http-equiv="refresh" content="5">
+  <style>
+    body { font-family: 'Montserrat', monospace, Arial, sans-serif; background: #23272a; color: #eee; margin: 0; }
+    header { background: #2c2f33; padding: 1.5em 2em; box-shadow: 0 2px 8px #0004; }
+    h1 { color: #7289da; margin: 0; font-size: 2.2em; letter-spacing: 2px; }
+    .nav { margin: 1em 0 2em 0; }
+    .nav a { color: #43b581; margin-right: 1.5em; font-weight: bold; text-decoration: none; letter-spacing: 1px; }
+    .nav a:hover { text-decoration: underline; }
+    .container { max-width: 900px; margin: 2em auto; background: #2c2f33; border-radius: 12px; box-shadow: 0 4px 24px #0006; padding: 2em; }
+    pre { background: #18191c; padding: 1.5em; border-radius: 8px; overflow-x: auto; font-size: 1.1em; color: #43b581; }
+    .logline { margin: 0 0 0.5em 0; white-space: pre-wrap; }
+    .error { color: #ff5555; }
+    .warn { color: #ffb86c; }
+    .info { color: #43b581; }
+    .debug { color: #8be9fd; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Bot Console Logs</h1>
+    <div class="nav">
+      <a href="/">Főoldal</a>
+      <a href="/statistics">Statisztika</a>
+      <a href="/blank">Blank Page</a>
+      <a href="/console">Console</a>
+    </div>
+  </header>
+  <div class="container">
+    <% if (!logs.length) { %>
+      <p>Nincsenek elérhető logok.</p>
+    <% } else { %>
+      <pre>
+<% logs.forEach(function(line) { %>
+  <span class="logline <%= line.level %>"><%= line.text %></span>
+<% }); %>
+      </pre>
+    <% } %>
+  </div>
+</body>
+</html>
