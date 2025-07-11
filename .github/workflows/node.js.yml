@@ -29,11 +29,8 @@ jobs:
       - name: Register commands
         run: node scripts/register-commands.js
         env:
-          DISCORD_TOKEN: ${{ secrets.BOT_TOKEN }}
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-
-      - name: Build or start project (add your own command here)
-        run: npm run start
+          DISCORD_TOKEN: ${{ secrets.bot.BOT_TOKEN }}
+          CLIENT_ID: ${{ secrets.bot.CLIENT_ID }}
 
       - name: Send success notification to Discord
         if: success()
@@ -42,7 +39,7 @@ jobs:
                -H "Content-Type: application/json" \
                -d '{"content": "✅ CI build successful on main branch!"}'
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.bot.DISCORD_WEBHOOK_URL }}
 
       - name: Send failure notification to Discord
         if: failure()
@@ -51,4 +48,4 @@ jobs:
                -H "Content-Type: application/json" \
                -d '{"content": "❌ CI build failed on main branch. Check logs."}'
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets..bot.DISCORD_WEBHOOK_URL }}
