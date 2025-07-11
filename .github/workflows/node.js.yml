@@ -48,4 +48,4 @@ jobs:
                -H "Content-Type: application/json" \
                -d '{"content": "❌ CI build failed on main branch. Check logs."}'
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets..bot.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.bot.DISCORD_WEBHOOK_URL }}
