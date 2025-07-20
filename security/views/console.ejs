@@ -1,45 +1,450 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Bot Console Logs</title>
-  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
-  <meta http-equiv="refresh" content="5">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Console Logs - Nyx Bot Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    body { font-family: 'Montserrat', monospace, Arial, sans-serif; background: #23272a; color: #eee; margin: 0; }
-    header { background: #2c2f33; padding: 1.5em 2em; box-shadow: 0 2px 8px #0004; }
-    h1 { color: #7289da; margin: 0; font-size: 2.2em; letter-spacing: 2px; }
-    .nav { margin: 1em 0 2em 0; }
-    .nav a { color: #43b581; margin-right: 1.5em; font-weight: bold; text-decoration: none; letter-spacing: 1px; }
-    .nav a:hover { text-decoration: underline; }
-    .container { max-width: 900px; margin: 2em auto; background: #2c2f33; border-radius: 12px; box-shadow: 0 4px 24px #0006; padding: 2em; }
-    pre { background: #18191c; padding: 1.5em; border-radius: 8px; overflow-x: auto; font-size: 1.1em; color: #43b581; }
-    .logline { margin: 0 0 0.5em 0; white-space: pre-wrap; }
-    .error { color: #ff5555; }
-    .warn { color: #ffb86c; }
-    .info { color: #43b581; }
-    .debug { color: #8be9fd; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      font-weight: 300;
+    }
+
+    .nav-links {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-link {
+      padding: 0.75rem 1.5rem;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      text-decoration: none;
+      border-radius: 25px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .nav-link:hover, .nav-link.active {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .console-section {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 0;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      overflow: hidden;
+    }
+
+    .console-header {
+      background: linear-gradient(135deg, #2d3748, #4a5568);
+      color: white;
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .console-title {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .console-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .console-btn {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-close { background: #ff5f56; }
+    .btn-minimize { background: #ffbd2e; }
+    .btn-maximize { background: #27ca3f; }
+
+    .console-body {
+      background: #1a202c;
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      max-height: 600px;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    .console-body::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .console-body::-webkit-scrollbar-track {
+      background: #2d3748;
+    }
+
+    .console-body::-webkit-scrollbar-thumb {
+      background: #4a5568;
+      border-radius: 4px;
+    }
+
+    .console-body::-webkit-scrollbar-thumb:hover {
+      background: #718096;
+    }
+
+    .log-line {
+      margin-bottom: 0.5rem;
+      padding: 0.25rem 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border-left: 3px solid transparent;
+      padding-left: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .log-line:hover {
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+    }
+
+    .log-line.info {
+      color: #63b3ed;
+      border-left-color: #63b3ed;
+    }
+
+    .log-line.warn {
+      color: #f6e05e;
+      border-left-color: #f6e05e;
+    }
+
+    .log-line.error {
+      color: #fc8181;
+      border-left-color: #fc8181;
+    }
+
+    .log-line.debug {
+      color: #9f7aea;
+      border-left-color: #9f7aea;
+    }
+
+    .log-line.success {
+      color: #68d391;
+      border-left-color: #68d391;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #718096;
+    }
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-message {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-description {
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    .refresh-info {
+      background: rgba(99, 179, 237, 0.1);
+      border: 1px solid rgba(99, 179, 237, 0.3);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      color: white;
+      text-align: center;
+    }
+
+    .refresh-info i {
+      margin-right: 0.5rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 2rem;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      text-decoration: none;
+      border-radius: 25px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
+      margin-top: 2rem;
+    }
+
+    .back-link:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .log-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: rgba(45, 55, 72, 0.8);
+      color: #e2e8f0;
+      font-size: 0.85rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .log-count {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .count-item {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .count-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .dot-info { background: #63b3ed; }
+    .dot-warn { background: #f6e05e; }
+    .dot-error { background: #fc8181; }
+    .dot-debug { background: #9f7aea; }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .console-header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .console-body {
+        font-size: 0.8rem;
+        padding: 1rem;
+      }
+
+      .log-stats {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+    }
+
+    .loading-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      color: #718096;
+      font-style: italic;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #4a5568;
+      border-top: 2px solid #63b3ed;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Bot Console Logs</h1>
-    <div class="nav">
-      <a href="/">Főoldal</a>
-      <a href="/statistics">Statisztika</a>
-      <a href="/blank">Blank Page</a>
-      <a href="/console">Console</a>
-    </div>
-  </header>
   <div class="container">
-    <% if (!logs.length) { %>
-      <p>Nincsenek elérhető logok.</p>
-    <% } else { %>
-      <pre>
-<% logs.forEach(function(line) { %>
-  <span class="logline <%= line.level %>"><%= line.text %></span>
-<% }); %>
-      </pre>
-    <% } %>
+    <div class="header">
+      <h1><i class="fas fa-terminal"></i> Console Logs</h1>
+      <p>Real-time system monitoring and debugging</p>
+    </div>
+
+    <div class="nav-links">
+      <a href="/" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+      <a href="/statistics" class="nav-link"><i class="fas fa-chart-bar"></i> Statistics</a>
+      <a href="/console" class="nav-link active"><i class="fas fa-terminal"></i> Console</a>
+      <a href="/blank" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+    </div>
+
+    <div class="refresh-info">
+      <i class="fas fa-sync-alt"></i>
+      This page automatically refreshes every 5 seconds to show the latest logs
+    </div>
+
+    <div class="console-section">
+      <div class="console-header">
+        <div class="console-title">
+          <i class="fas fa-terminal"></i>
+          System Console
+        </div>
+        <div class="console-controls">
+          <button class="console-btn btn-close"></button>
+          <button class="console-btn btn-minimize"></button>
+          <button class="console-btn btn-maximize"></button>
+        </div>
+      </div>
+
+      <div class="console-body">
+        <% if (!logs.length) { %>
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-file-alt"></i></div>
+            <div class="empty-message">No logs available</div>
+            <div class="empty-description">Console logs will appear here when the bot generates them</div>
+          </div>
+        <% } else { %>
+          <% logs.forEach(function(line) { %>
+            <div class="log-line <%= line.level %>"><%= line.text %></div>
+          <% }); %>
+        <% } %>
+      </div>
+
+      <% if (logs.length) { %>
+        <div class="log-stats">
+          <div class="log-count">
+            <div class="count-item">
+              <div class="count-dot dot-info"></div>
+              <span>Info: <%= logs.filter(l => l.level === 'info').length %></span>
+            </div>
+            <div class="count-item">
+              <div class="count-dot dot-warn"></div>
+              <span>Warn: <%= logs.filter(l => l.level === 'warn').length %></span>
+            </div>
+            <div class="count-item">
+              <div class="count-dot dot-error"></div>
+              <span>Error: <%= logs.filter(l => l.level === 'error').length %></span>
+            </div>
+            <div class="count-item">
+              <div class="count-dot dot-debug"></div>
+              <span>Debug: <%= logs.filter(l => l.level === 'debug').length %></span>
+            </div>
+          </div>
+          <div class="loading-indicator">
+            <div class="spinner"></div>
+            Live monitoring active
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <a href="/" class="back-link">
+      <i class="fas fa-arrow-left"></i>
+      Back to Dashboard
+    </a>
   </div>
+
+  <script>
+    // Auto-scroll to bottom of console
+    document.addEventListener('DOMContentLoaded', function() {
+      const consoleBody = document.querySelector('.console-body');
+      if (consoleBody) {
+        consoleBody.scrollTop = consoleBody.scrollHeight;
+      }
+
+      // Add click handlers for console buttons
+      document.querySelector('.btn-close')?.addEventListener('click', () => {
+        if (confirm('Close console monitoring?')) {
+          window.location.href = '/';
+        }
+      });
+
+      document.querySelector('.btn-minimize')?.addEventListener('click', () => {
+        const consoleBody = document.querySelector('.console-body');
+        consoleBody.style.display = consoleBody.style.display === 'none' ? 'block' : 'none';
+      });
+
+      document.querySelector('.btn-maximize')?.addEventListener('click', () => {
+        const consoleSection = document.querySelector('.console-section');
+        if (consoleSection.style.position === 'fixed') {
+          consoleSection.style.position = 'static';
+          consoleSection.style.top = 'auto';
+          consoleSection.style.left = 'auto';
+          consoleSection.style.width = 'auto';
+          consoleSection.style.height = 'auto';
+          consoleSection.style.zIndex = 'auto';
+        } else {
+          consoleSection.style.position = 'fixed';
+          consoleSection.style.top = '20px';
+          consoleSection.style.left = '20px';
+          consoleSection.style.width = 'calc(100vw - 40px)';
+          consoleSection.style.height = 'calc(100vh - 40px)';
+          consoleSection.style.zIndex = '1000';
+        }
+      });
+    });
+  </script>
 </body>
 </html>

@@ -1,43 +1,400 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Keresés eredményei - <%= q %></title>
-  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Results - Nyx Bot Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    body { font-family: 'Montserrat', Arial, sans-serif; background: #23272a; color: #eee; margin: 0; }
-    header { background: #2c2f33; padding: 1.5em 2em; box-shadow: 0 2px 8px #0004; }
-    h1 { color: #7289da; margin: 0; font-size: 2.2em; letter-spacing: 2px; }
-    .nav { margin: 1em 0 2em 0; }
-    .nav a { color: #43b581; margin-right: 1.5em; font-weight: bold; text-decoration: none; letter-spacing: 1px; }
-    .nav a:hover { text-decoration: underline; }
-    .container { max-width: 700px; margin: 2em auto; background: #2c2f33; border-radius: 12px; box-shadow: 0 4px 24px #0006; padding: 2em; }
-    ul { list-style: none; padding: 0; }
-    li { margin: 0.3em 0; }
-    li a { color: #eee; background: #36393f; padding: 0.5em 1em; border-radius: 6px; display: inline-block; transition: background 0.2s, color 0.2s; }
-    li a:hover { background: #43b581; color: #23272a; }
-    .back { margin-top: 2em; display: inline-block; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .search-query {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 500;
+      display: inline-block;
+      margin-top: 0.5rem;
+    }
+
+    .nav-links {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-link {
+      padding: 0.75rem 1.5rem;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      text-decoration: none;
+      border-radius: 25px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .search-section {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .search-form {
+      display: flex;
+      gap: 1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 1rem 1.5rem;
+      border: 2px solid #e1e5e9;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-btn {
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .results-section {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 2rem;
+    }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .results-icon {
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .results-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .results-count {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .results-list {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .result-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem;
+      background: #f8f9fa;
+      border-radius: 12px;
+      text-decoration: none;
+      color: #333;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+    }
+
+    .result-item:hover {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .result-icon {
+      font-size: 1.5rem;
+      width: 40px;
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .result-content {
+      flex: 1;
+    }
+
+    .result-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .result-type {
+      font-size: 0.9rem;
+      opacity: 0.7;
+      text-transform: capitalize;
+    }
+
+    .result-arrow {
+      font-size: 1.2rem;
+      opacity: 0.5;
+      transition: all 0.3s ease;
+    }
+
+    .result-item:hover .result-arrow {
+      opacity: 1;
+      transform: translateX(5px);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #666;
+    }
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+
+    .empty-message {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .empty-description {
+      font-size: 1rem;
+      opacity: 0.7;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 2rem;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      text-decoration: none;
+      border-radius: 25px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .back-link:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .search-form {
+        flex-direction: column;
+      }
+
+      .result-item {
+        padding: 1rem;
+      }
+
+      .results-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Keresés eredményei: <%= q %></h1>
-    <div class="nav">
-      <a href="/">Főoldal</a>
-      <a href="/statistics">Statisztika</a>
-      <a href="/blank">Blank Page</a>
-    </div>
-  </header>
   <div class="container">
-    <% if (results.length === 0) { %>
-      <p>Nincs találat.</p>
-    <% } else { %>
-      <ul>
-        <% results.forEach(function(r) { %>
-          <li><a href="/data/<%= r.type %>/<%= r.file %>"><%= r.type %>/<%= r.file %></a></li>
-        <% }); %>
-      </ul>
-    <% } %>
-    <a class="back" href="/">&larr; Vissza a főoldalra</a>
+    <div class="header">
+      <h1><i class="fas fa-search"></i> Search Results</h1>
+      <div class="search-query">
+        <i class="fas fa-quote-left"></i> <%= q %> <i class="fas fa-quote-right"></i>
+      </div>
+    </div>
+
+    <div class="nav-links">
+      <a href="/" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+      <a href="/statistics" class="nav-link"><i class="fas fa-chart-bar"></i> Statistics</a>
+      <a href="/console" class="nav-link"><i class="fas fa-terminal"></i> Console</a>
+      <a href="/blank" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+    </div>
+
+    <div class="search-section">
+      <form class="search-form" action="/search" method="get">
+        <input type="text" name="q" class="search-input" placeholder="Search files by name or ID..." value="<%= q %>" required>
+        <button type="submit" class="search-btn">
+          <i class="fas fa-search"></i>
+          Search Again
+        </button>
+      </form>
+    </div>
+
+    <div class="results-section">
+      <div class="results-header">
+        <div class="results-icon"><i class="fas fa-list"></i></div>
+        <h2 class="results-title">Search Results</h2>
+        <div class="results-count"><%= results.length %> found</div>
+      </div>
+
+      <% if (results.length === 0) { %>
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fas fa-search-minus"></i></div>
+          <div class="empty-message">No results found</div>
+          <div class="empty-description">Try searching with different keywords or check your spelling</div>
+        </div>
+      <% } else { %>
+        <div class="results-list">
+          <% results.forEach(function(r) { %>
+            <a href="/data/<%= r.type %>/<%= r.file %>" class="result-item">
+              <div class="result-icon">
+                <% if (r.type === 'logs') { %>
+                  <i class="fas fa-file-alt"></i>
+                <% } else if (r.type === 'profiles') { %>
+                  <i class="fas fa-user"></i>
+                <% } else if (r.type === 'guilds') { %>
+                  <i class="fas fa-server"></i>
+                <% } else { %>
+                  <i class="fas fa-file"></i>
+                <% } %>
+              </div>
+              <div class="result-content">
+                <div class="result-name"><%= r.file %></div>
+                <div class="result-type"><%= r.type %></div>
+              </div>
+              <div class="result-arrow">
+                <i class="fas fa-chevron-right"></i>
+              </div>
+            </a>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+
+    <a href="/" class="back-link">
+      <i class="fas fa-arrow-left"></i>
+      Back to Dashboard
+    </a>
   </div>
+
+  <script>
+    // Highlight search terms in results
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchTerm = '<%= q %>'.toLowerCase();
+      const resultNames = document.querySelectorAll('.result-name');
+      
+      resultNames.forEach(name => {
+        const text = name.textContent;
+        const regex = new RegExp(`(${searchTerm})`, 'gi');
+        const highlightedText = text.replace(regex, '<mark style="background: rgba(255,255,255,0.3); padding: 0.1rem 0.2rem; border-radius: 3px;">$1</mark>');
+        name.innerHTML = highlightedText;
+      });
+
+      // Animate results on load
+      const resultItems = document.querySelectorAll('.result-item');
+      resultItems.forEach((item, index) => {
+        setTimeout(() => {
+          item.style.opacity = '0';
+          item.style.transform = 'translateY(20px)';
+          item.style.transition = 'all 0.6s ease';
+          setTimeout(() => {
+            item.style.opacity = '1';
+            item.style.transform = 'translateY(0)';
+          }, 100);
+        }, index * 100);
+      });
+    });
+  </script>
 </body>
 </html>
