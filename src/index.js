@@ -290,7 +290,7 @@ rl.on('line', async (input) => {
 
 // Escrow all existing data files on startup (one-time migration)
 try {
-  const { escrowDir } = require('../security/escrow_existing');
+  const { escrowDir } = require('../webpanel/escrow_existing');
   const dataDir = require('path').join(__dirname, '../data');
   escrowDir(dataDir);
   logger.info('[ESCROW] All existing data files escrowed (encrypted)');
@@ -300,7 +300,7 @@ try {
 
 // Start the webpanel if enabled (default: always enabled)
 try {
-  const { startWebPanel } = require('../security/webpanel');
+  const { startWebPanel } = require('../webpanel/webpanel');
   startWebPanel(50249);
   logger.info('[WEBPANEL] Web panel started on http://116.202.112.154:50249/');
 } catch (e) {

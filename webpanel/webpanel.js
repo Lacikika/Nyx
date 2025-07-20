@@ -114,10 +114,7 @@ app.get('/data/:type/:file', (req, res) => {
 
 
 function startWebPanel(port = 50249) {
-  app.listen(port, () => {
-    console.log(`Web panel running on port ${port}`);
-    console.log(`Access it at: http://localhost:${port}`);
-  });
+  app.listen(port, () => console.log(`Web panel running on http://116.202.112.154:${port}`));
 }
 
 // If run directly, start the server
