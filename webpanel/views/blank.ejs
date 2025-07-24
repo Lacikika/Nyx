@@ -2,30 +2,373 @@
 <html>
 <head>
   <title>Blank Page</title>
-  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Montserrat', Arial, sans-serif; background: #23272a; color: #eee; margin: 0; }
-    header { background: #2c2f33; padding: 1.5em 2em; box-shadow: 0 2px 8px #0004; }
-    h1 { color: #7289da; margin: 0; font-size: 2.2em; letter-spacing: 2px; }
-    .nav { margin: 1em 0 2em 0; }
-    .nav a { color: #43b581; margin-right: 1.5em; font-weight: bold; text-decoration: none; letter-spacing: 1px; }
-    .nav a:hover { text-decoration: underline; }
-    .container { max-width: 700px; margin: 2em auto; background: #2c2f33; border-radius: 12px; box-shadow: 0 4px 24px #0006; padding: 2em; }
-    a { color: #43b581; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body.theme-dark {
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+      color: #e2e8f0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+    }
+    body.theme-light {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      color: #1e293b;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+    }
+    
+    header.theme-dark {
+      background: rgba(15, 15, 35, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(114, 137, 218, 0.2);
+      box-shadow: 0 4px 32px rgba(0, 0, 0, 0.3);
+      padding: 1.5rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header.theme-light {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(67, 181, 129, 0.2);
+      box-shadow: 0 4px 32px rgba(0, 0, 0, 0.1);
+      padding: 1.5rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    h1.theme-dark {
+      color: #e2e8f0;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #7c3aed, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    h1.theme-light {
+      color: #1e293b;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #059669, #0ea5e9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    
+    .nav a.theme-dark {
+      color: #94a3b8;
+      background: rgba(30, 41, 59, 0.5);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    .nav a.theme-light {
+      color: #64748b;
+      background: rgba(248, 250, 252, 0.8);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(100, 116, 139, 0.1);
+    }
+    
+    .nav a.theme-dark:hover {
+      color: #e2e8f0;
+      background: rgba(124, 58, 237, 0.2);
+      border-color: rgba(124, 58, 237, 0.3);
+      transform: translateY(-1px);
+    }
+    .nav a.theme-light:hover {
+      color: #1e293b;
+      background: rgba(5, 150, 105, 0.1);
+      border-color: rgba(5, 150, 105, 0.2);
+      transform: translateY(-1px);
+    }
+    
+    .nav a.active {
+      font-weight: bolder;
+      background: linear-gradient(135deg, #7c3aed, #3b82f6) !important;
+      color: white !important;
+      border-color: transparent !important;
+    }
+    
+    .theme-toggle {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    
+    .theme-toggle a.theme-dark {
+      color: #94a3b8;
+      background: rgba(30, 41, 59, 0.5);
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    .theme-toggle a.theme-light {
+      color: #64748b;
+      background: rgba(248, 250, 252, 0.8);
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(100, 116, 139, 0.1);
+    }
+    
+    .theme-toggle a.active {
+      background: linear-gradient(135deg, #7c3aed, #3b82f6) !important;
+      color: white !important;
+      border-color: transparent !important;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    
+    .container.theme-dark {
+      background: rgba(15, 15, 35, 0.6);
+      backdrop-filter: blur(20px);
+      border-radius: 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+      padding: 2rem;
+    }
+    .container.theme-light {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      border-radius: 1rem;
+      border: 1px solid rgba(100, 116, 139, 0.1);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      padding: 2rem;
+    }
+    
+    .blank-content {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+    
+    .blank-icon {
+      font-size: 4rem;
+      margin-bottom: 2rem;
+      opacity: 0.6;
+    }
+    
+    .blank-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: inherit;
+    }
+    
+    .blank-description {
+      font-size: 1rem;
+      color: #94a3b8;
+      margin-bottom: 2rem;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.6;
+    }
+    
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    
+    .feature-card {
+      background: rgba(30, 41, 59, 0.3);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      padding: 1.5rem;
+      transition: all 0.2s ease;
+      text-align: left;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      border-color: rgba(124, 58, 237, 0.3);
+    }
+    
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    .feature-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: inherit;
+    }
+    
+    .feature-description {
+      font-size: 0.875rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+    
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #94a3b8;
+      background: rgba(30, 41, 59, 0.5);
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      margin-top: 2rem;
+    }
+    
+    .back-link:hover {
+      color: #e2e8f0;
+      background: rgba(124, 58, 237, 0.2);
+      border-color: rgba(124, 58, 237, 0.3);
+      transform: translateY(-1px);
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        margin: 1rem;
+        padding: 1rem;
+      }
+      
+      header.theme-dark,
+      header.theme-light {
+        padding: 1rem;
+      }
+      
+      h1.theme-dark,
+      h1.theme-light {
+        font-size: 1.5rem;
+      }
+      
+      .nav {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .blank-content {
+        padding: 2rem 1rem;
+      }
+      
+      .blank-icon {
+        font-size: 3rem;
+      }
+      
+      .blank-title {
+        font-size: 1.25rem;
+      }
+      
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
-<body>
-  <header>
-    <h1>Blank Page</h1>
+<body class="theme-<%= theme %>">
+  <header class="theme-<%= theme %>">
+    <h1 class="theme-<%= theme %>">📄 Blank Page</h1>
     <div class="nav">
-      <a href="/">Főoldal</a>
-      <a href="/statistics">Statisztika</a>
-      <a href="/blank">Blank Page</a>
+      <a href="/" class="theme-<%= theme %>">🏠 Főoldal</a>
+      <a href="/statistics" class="theme-<%= theme %>">📊 Statisztika</a>
+      <a href="/blank" class="active theme-<%= theme %>">📄 Blank Page</a>
+      <a href="/console" class="theme-<%= theme %>">💻 Console</a>
+      <a href="/guildconfig" class="theme-<%= theme %>">⚙️ Guild Configs</a>
+      <a href="/search" class="theme-<%= theme %>">🔍 Search</a>
+    </div>
+    <div class="theme-toggle">
+      <a href="/theme/light" class="<%= theme === 'light' ? 'active ' : '' %>theme-light">☀️ Light</a>
+      <a href="/theme/dark" class="<%= theme === 'dark' ? 'active ' : '' %>theme-dark">🌙 Dark</a>
     </div>
   </header>
-  <div class="container">
-    <p>This is a placeholder for future admin or custom content.</p>
-    <a href="/">&larr; Vissza a főoldalra</a>
+  
+  <div class="container theme-<%= theme %>">
+    <div class="blank-content">
+      <div class="blank-icon">🚀</div>
+      <h2 class="blank-title">Ready for Custom Content</h2>
+      <p class="blank-description">
+        This is a placeholder page for future admin features or custom content. 
+        You can use this space to add new functionality, dashboards, or administrative tools 
+        as your web panel grows and evolves.
+      </p>
+      
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3 class="feature-title">Fast Performance</h3>
+          <p class="feature-description">
+            Built with modern web technologies for optimal speed and responsiveness.
+          </p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3 class="feature-title">Secure Access</h3>
+          <p class="feature-description">
+            Protected with authentication and encrypted data storage for maximum security.
+          </p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3 class="feature-title">Mobile Ready</h3>
+          <p class="feature-description">
+            Fully responsive design that works perfectly on all devices and screen sizes.
+          </p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <h3 class="feature-title">Modern Design</h3>
+          <p class="feature-description">
+            Clean, intuitive interface with dark and light theme support for better user experience.
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <a href="/" class="back-link">
+      <span>←</span>
+      Vissza a főoldalra
+    </a>
   </div>
 </body>
 </html>

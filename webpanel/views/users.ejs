@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Users Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body.theme-dark {
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+      color: #e2e8f0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+    }
+    body.theme-light {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      color: #1e293b;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+    }
+    
+    .theme-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      z-index: 1000;
+    }
+    
+    .theme-toggle a.theme-dark {
+      color: #94a3b8;
+      background: rgba(15, 15, 35, 0.8);
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      backdrop-filter: blur(10px);
+    }
+    .theme-toggle a.theme-light {
+      color: #64748b;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(100, 116, 139, 0.1);
+      backdrop-filter: blur(10px);
+    }
+    
+    .theme-toggle a.active {
+      background: linear-gradient(135deg, #7c3aed, #3b82f6) !important;
+      color: white !important;
+      border-color: transparent !important;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    
+    .container.theme-dark {
+      background: rgba(15, 15, 35, 0.6);
+      backdrop-filter: blur(20px);
+      border-radius: 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+      padding: 2rem;
+    }
+    .container.theme-light {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      border-radius: 1rem;
+      border: 1px solid rgba(100, 116, 139, 0.1);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      padding: 2rem;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 2rem;
+      text-align: center;
+      background: linear-gradient(135deg, #7c3aed, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .notification {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+    }
+    
+    .notification.success {
+      color: #fff;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border: none;
+    }
+    
+    .notification.error {
+      color: #fff;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border: none;
+    }
+    
+    .users-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    .user-card {
+      background: rgba(30, 41, 59, 0.3);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      padding: 1.5rem;
+      transition: all 0.2s ease;
+    }
+    
+    .user-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      border-color: rgba(124, 58, 237, 0.3);
+    }
+    
+    .user-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 1rem;
+    }
+    
+    .user-name {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: inherit;
+    }
+    
+    .user-id {
+      font-size: 0.875rem;
+      color: #94a3b8;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #94a3b8;
+    }
+    
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    
+    .empty-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .empty-description {
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        margin: 1rem;
+        padding: 1rem;
+      }
+      
+      .users-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .theme-toggle {
+        position: static;
+        justify-content: center;
+        margin-bottom: 2rem;
+      }
+    }
+  </style>
+</head>
+<body class="theme-<%= theme %>">
+  <div class="theme-toggle">
+    <a href="/theme/light" class="<%= theme === 'light' ? 'active ' : '' %>theme-light">☀️ Light</a>
+    <a href="/theme/dark" class="<%= theme === 'dark' ? 'active ' : '' %>theme-dark">🌙 Dark</a>
+  </div>
+  
+  <div class="container theme-<%= theme %>">
+    <h1>👥 Users Management</h1>
+    
+    <% if (success) { %>
+      <div class="notification success">✅ <%= success %></div>
+    <% } %>
+    <% if (error) { %>
+      <div class="notification error">❌ <%= error %></div>
+    <% } %>
+    
+    <% if (users && users.length > 0) { %>
+      <div class="users-grid">
+        <% users.forEach(function(user) { %>
+          <div class="user-card">
+            <div class="user-avatar">
+              <%= user.username ? user.username.charAt(0).toUpperCase() : '?' %>
+            </div>
+            <div class="user-name"><%= user.username || 'Unknown User' %></div>
+            <div class="user-id">ID: <%= user.id || 'N/A' %></div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="empty-state">
+        <div class="empty-icon">👤</div>
+        <div class="empty-title">No Users Found</div>
+        <div class="empty-description">
+          There are currently no users to display. Users will appear here once they interact with the system.
+        </div>
+      </div>
+    <% } %>
+  </div>
+</body>
+</html>
