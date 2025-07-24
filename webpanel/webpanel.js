@@ -12,7 +12,6 @@ const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const app = express();
 
-// ...existing code...
 // i18n setup
 i18n.configure({
   locales: ['en', 'hu'],
@@ -142,8 +141,10 @@ function requireDiscordLogin(req, res, next) {
 app.use(express.urlencoded({ extended: true }));
 // Middleware: require login
 function requireLogin(req, res, next) {
-  if (!req.session.user) return res.redirect('/login');
-  next();
+  if (req.session.user || req.user) {
+    return next();
+  }
+  return res.redirect('/login');
 }
 // Webpanel user DB helpers
 const WEBPANEL_USER_TYPE = 'webpanel_users';
@@ -333,6 +334,53 @@ app.get('/data/:type/:file', requireLogin, (req, res) => {
     res.render('webpanel_view', { file: req.params.file, type: req.params.type, json });
   } catch (e) {
     res.status(500).send('Failed to decrypt or parse file.');
+  }
+});
+
+// Guild config view route (GET + POST for editing roles)
+app.get('/guildconfig/:file', requireLogin, async (req, res) => {
+  const filePath = path.join(__dirname, '../data/guilds', req.params.file);
+  try {
+    const buf = fs.readFileSync(filePath);
+    const json = JSON.parse(decrypt(buf));
+    // Get available roles from Discord API if user is Discord-authenticated
+    let availableRoles = [];
+    if (req.user && req.user.guilds) {
+      const guildId = req.params.file.split('_')[0];
+      const guild = req.user.guilds.find(g => g.id === guildId);
+      // Discord OAuth2 only provides basic guild info, not roles by default
+      // If roles are missing, fallback to empty array
+      if (guild && Array.isArray(guild.roles)) {
+        availableRoles = guild.roles;
+      }
+    }
+    // Always pass availableRoles, even if empty
+    res.render('webpanel_view', { file: req.params.file, type: 'guilds', json, availableRoles: availableRoles });
+  } catch (e) {
+    res.status(500).send('Failed to decrypt or parse guild config file.');
+  }
+});
+
+app.post('/guildconfig/:file', requireLogin, async (req, res) => {
+  const filePath = path.join(__dirname, '../data/guilds', req.params.file);
+  try {
+    const buf = fs.readFileSync(filePath);
+    let json = JSON.parse(decrypt(buf));
+    // Update roles from form
+    if (req.body.roles) {
+      json.roles = Array.isArray(req.body.roles) ? req.body.roles : [req.body.roles];
+    }
+    // Save updated config
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key, 'hex'), iv);
+    let encrypted = cipher.update(Buffer.from(JSON.stringify(json)));
+    encrypted = Buffer.concat([iv, encrypted, cipher.final()]);
+    fs.writeFileSync(filePath, encrypted);
+    req.session.success = 'Guild config updated!';
+    res.redirect(`/guildconfig/${req.params.file}`);
+  } catch (e) {
+    req.session.error = 'Failed to update guild config.';
+    res.redirect(`/guildconfig/${req.params.file}`);
   }
 });
 

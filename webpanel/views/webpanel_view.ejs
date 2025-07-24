@@ -214,8 +214,29 @@
       <span>←</span>
       Vissza a főoldalra
     </a>
-    
-    <% if (json.entries && Array.isArray(json.entries) && json.entries.length > 0) { %>
+
+    <% if (type === 'guilds') { %>
+      <h2>Guild Config Editor</h2>
+      <form method="POST" style="margin-bottom:2rem;">
+        <div style="margin-bottom:1rem;">
+          <label style="font-weight:600;">Roles:</label><br>
+          <% if (Array.isArray(availableRoles) && availableRoles.length > 0) { %>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+              <% availableRoles.forEach(function(role) { %>
+                <label style="background:<%= (json.roles && json.roles.includes(role.id)) ? 'linear-gradient(135deg,#7c3aed,#3b82f6)' : 'rgba(30,41,59,0.5)' %>;color:<%= (json.roles && json.roles.includes(role.id)) ? '#fff' : '#94a3b8' %>;padding:0.5rem 1rem;border-radius:0.5rem;cursor:pointer;">
+                  <input type="checkbox" name="roles" value="<%= role.id %>" style="margin-right:0.5em;vertical-align:middle;" <%= (json.roles && json.roles.includes(role.id)) ? 'checked' : '' %> />
+                  <%= role.name %>
+                </label>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <span style="color:#64748b;">No roles available (Discord login required)</span>
+          <% } %>
+        </div>
+        <button type="submit" style="background:linear-gradient(135deg,#059669,#0ea5e9);color:#fff;border:none;border-radius:0.5rem;padding:0.75rem 1.5rem;font-weight:600;font-size:0.875rem;cursor:pointer;">Save Config</button>
+      </form>
+      <pre><%= JSON.stringify(json, null, 2) %></pre>
+    <% } else if (json.entries && Array.isArray(json.entries) && json.entries.length > 0) { %>
       <table>
         <thead>
           <tr>
