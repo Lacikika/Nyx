@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guild Configuration</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Guild Configuration for <%= guild.name %></h1>
+        <form action="/guild/<%= guild.id %>/config" method="POST">
+            <div class="form-group">
+                <label for="prefix">Prefix</label>
+                <input type="text" class="form-control" id="prefix" name="prefix" value="<%= config.prefix %>">
+            </div>
+            <div class="form-group">
+                <label for="logChannel">Log Channel</label>
+                <select class="form-control" id="logChannel" name="logChannel">
+                    <% channels.forEach(channel => { %>
+                        <option value="<%= channel.id %>" <%= config.logChannel === channel.id ? 'selected' : '' %>>#<%= channel.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="welcomeChannel">Welcome Channel</label>
+                <select class="form-control" id="welcomeChannel" name="welcomeChannel">
+                    <% channels.forEach(channel => { %>
+                        <option value="<%= channel.id %>" <%= config.welcomeChannel === channel.id ? 'selected' : '' %>>#<%= channel.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="welcomeMessage">Welcome Message</label>
+                <textarea class="form-control" id="welcomeMessage" name="welcomeMessage" rows="3"><%= config.welcomeMessage %></textarea>
+            </div>
+            <div class="form-group">
+                <label for="autorole">Autorole</label>
+                <select class="form-control" id="autorole" name="autorole">
+                    <% roles.forEach(role => { %>
+                        <option value="<%= role.id %>" <%= config.autorole === role.id ? 'selected' : '' %>>@<%= role.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+    </div>
+</body>
+</html>

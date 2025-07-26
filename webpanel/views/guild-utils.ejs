@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guild Utilities</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Guild Utilities for <%= guild.name %></h1>
+
+        <h2>Welcome Messages</h2>
+        <form action="/guild/<%= guild.id %>/utils/welcome" method="POST">
+            <div class="form-group">
+                <label for="welcomeChannel">Welcome Channel</label>
+                <select class="form-control" id="welcomeChannel" name="welcomeChannel">
+                    <% channels.forEach(channel => { %>
+                        <option value="<%= channel.id %>" <%= utils.welcome && utils.welcome.channel === channel.id ? 'selected' : '' %>>#<%= channel.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="welcomeMessage">Welcome Message</label>
+                <textarea class="form-control" id="welcomeMessage" name="welcomeMessage" rows="3"><%= utils.welcome ? utils.welcome.message : '' %></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Welcome Message</button>
+        </form>
+
+        <hr>
+
+        <h2>Autoroles</h2>
+        <form action="/guild/<%= guild.id %>/utils/autorole" method="POST">
+            <div class="form-group">
+                <label for="autorole">Autorole</label>
+                <select class="form-control" id="autorole" name="autorole">
+                    <% roles.forEach(role => { %>
+                        <option value="<%= role.id %>" <%= utils.autorole === role.id ? 'selected' : '' %>>@<%= role.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Autorole</button>
+        </form>
+
+    </div>
+</body>
+</html>

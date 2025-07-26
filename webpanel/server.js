@@ -156,6 +156,22 @@ async function getWebpanelUser(username) {
 async function setWebpanelUser(username, hash) {
   await writeUser(WEBPANEL_USER_TYPE, username, WEBPANEL_USER_GUILD, { hash });
 }
+
+async function getGuildChannels(guildId) {
+    // This is a placeholder. In a real application, you would fetch this from the Discord API.
+    return [
+        { id: '123', name: 'general' },
+        { id: '456', name: 'random' }
+    ];
+}
+
+async function getGuildRoles(guildId) {
+    // This is a placeholder. In a real application, you would fetch this from the Discord API.
+    return [
+        { id: '789', name: 'Member' },
+        { id: '101', name: 'Admin' }
+    ];
+}
 // Discord OAuth2 login routes
 app.get('/auth/discord', passport.authenticate('discord'));
 app.get('/auth/discord/callback', passport.authenticate('discord', {
@@ -338,50 +354,95 @@ app.get('/data/:type/:file', requireLogin, (req, res) => {
 });
 
 // Guild config view route (GET + POST for editing roles)
-app.get('/guildconfig/:file', requireLogin, async (req, res) => {
-  const filePath = path.join(__dirname, '../data/guilds', req.params.file);
-  try {
-    const buf = fs.readFileSync(filePath);
-    const json = JSON.parse(decrypt(buf));
-    // Get available roles from Discord API if user is Discord-authenticated
-    let availableRoles = [];
-    if (req.user && req.user.guilds) {
-      const guildId = req.params.file.split('_')[0];
-      const guild = req.user.guilds.find(g => g.id === guildId);
-      // Discord OAuth2 only provides basic guild info, not roles by default
-      // If roles are missing, fallback to empty array
-      if (guild && Array.isArray(guild.roles)) {
-        availableRoles = guild.roles;
-      }
+app.get('/guild/:guildId/config', requireLogin, async (req, res) => {
+    const guildId = req.params.guildId;
+    const guild = req.user.guilds.find(g => g.id === guildId);
+    if (!guild) {
+        return res.status(403).send('Forbidden');
     }
-    // Always pass availableRoles, even if empty
-    res.render('webpanel_view', { file: req.params.file, type: 'guilds', json, availableRoles: availableRoles });
-  } catch (e) {
-    res.status(500).send('Failed to decrypt or parse guild config file.');
-  }
+
+    // Fetch guild channels and roles from Discord API
+    const channels = await getGuildChannels(guildId);
+    const roles = await getGuildRoles(guildId);
+
+    // Fetch current config from db
+    const config = await readUser('guilds', guildId, 'settings') || {};
+
+    res.render('guild-config', {
+        guild,
+        config,
+        channels,
+        roles
+    });
 });
 
-app.post('/guildconfig/:file', requireLogin, async (req, res) => {
-  const filePath = path.join(__dirname, '../data/guilds', req.params.file);
-  try {
-    const buf = fs.readFileSync(filePath);
-    let json = JSON.parse(decrypt(buf));
-    // Update roles from form
-    if (req.body.roles) {
-      json.roles = Array.isArray(req.body.roles) ? req.body.roles : [req.body.roles];
+app.post('/guild/:guildId/config', requireLogin, async (req, res) => {
+    const guildId = req.params.guildId;
+    const guild = req.user.guilds.find(g => g.id === guildId);
+    if (!guild) {
+        return res.status(403).send('Forbidden');
     }
-    // Save updated config
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key, 'hex'), iv);
-    let encrypted = cipher.update(Buffer.from(JSON.stringify(json)));
-    encrypted = Buffer.concat([iv, encrypted, cipher.final()]);
-    fs.writeFileSync(filePath, encrypted);
-    req.session.success = 'Guild config updated!';
-    res.redirect(`/guildconfig/${req.params.file}`);
-  } catch (e) {
-    req.session.error = 'Failed to update guild config.';
-    res.redirect(`/guildconfig/${req.params.file}`);
-  }
+
+    const newConfig = {
+        prefix: req.body.prefix,
+        logChannel: req.body.logChannel,
+    };
+
+    await writeUser('guilds', guildId, 'settings', newConfig);
+
+    res.redirect(`/guild/${guildId}/config`);
+});
+
+app.get('/guild/:guildId/utils', requireLogin, async (req, res) => {
+    const guildId = req.params.guildId;
+    const guild = req.user.guilds.find(g => g.id === guildId);
+    if (!guild) {
+        return res.status(403).send('Forbidden');
+    }
+
+    const channels = await getGuildChannels(guildId);
+    const roles = await getGuildRoles(guildId);
+    const utils = await readUser('guilds', guildId, 'utils') || {};
+
+    res.render('guild-utils', {
+        guild,
+        utils,
+        channels,
+        roles
+    });
+});
+
+app.post('/guild/:guildId/utils/welcome', requireLogin, async (req, res) => {
+    const guildId = req.params.guildId;
+    const guild = req.user.guilds.find(g => g.id === guildId);
+    if (!guild) {
+        return res.status(403).send('Forbidden');
+    }
+
+    const utils = await readUser('guilds', guildId, 'utils') || {};
+    utils.welcome = {
+        channel: req.body.welcomeChannel,
+        message: req.body.welcomeMessage
+    };
+
+    await writeUser('guilds', guildId, 'utils', utils);
+
+    res.redirect(`/guild/${guildId}/utils`);
+});
+
+app.post('/guild/:guildId/utils/autorole', requireLogin, async (req, res) => {
+    const guildId = req.params.guildId;
+    const guild = req.user.guilds.find(g => g.id === guildId);
+    if (!guild) {
+        return res.status(403).send('Forbidden');
+    }
+
+    const utils = await readUser('guilds', guildId, 'utils') || {};
+    utils.autorole = req.body.autorole;
+
+    await writeUser('guilds', guildId, 'utils', utils);
+
+    res.redirect(`/guild/${guildId}/utils`);
 });
 
 
@@ -394,4 +455,4 @@ if (require.main === module) {
   startWebPanel();
 }
 
-module.exports = { startWebPanel };
+module.exports = { startWebPanel, app };
