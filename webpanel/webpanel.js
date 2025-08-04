@@ -57,11 +57,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 
 app.get('/', (req, res) => {
-  res.render('webpanel_index', {
-    logs: listFiles('logs'),
-    profiles: listFiles('profiles'),
-    guilds: listFiles('guilds')
-  });
+  res.redirect('/console');
 });
 
 // Statistics page
@@ -114,7 +110,7 @@ app.get('/data/:type/:file', (req, res) => {
 
 
 function startWebPanel(port = 50249) {
-  app.listen(port, () => console.log(`Web panel running on http://116.202.112.154:${port}`));
+  app.listen(port, () => console.log(`Web panel running on http://localhost:${port}`));
 }
 
 // If run directly, start the server

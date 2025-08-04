@@ -4,6 +4,7 @@ const config = require('./config');
 const fs = require('fs');
 const { readUser, writeUser, appendUserLog, appendGuildLog } = require('../utils/jsondb');
 const logger = require('../utils/logger');
+const t = require('../utils/locale');
 
 
 // Attach after client is defined
@@ -123,28 +124,28 @@ const rl = readline.createInterface({ input: process.stdin, output: process.stdo
 rl.on('line', async (input) => {
   const cmd = input.trim();
   if (cmd === 'restart') {
-    console.log('[BOT] Restarting...');
+    console.log(t('bot_restarting'));
     process.exit(2);
   } else if (cmd === 'stop') {
-    console.log('[BOT] Stopping...');
+    console.log(t('bot_stopping'));
     process.exit(0);
   } else if (cmd.startsWith('say ')) {
     const msg = cmd.slice(4).trim();
-    if (!msg) return console.log('[BOT] Nincs üzenet.');
+    if (!msg) return console.log(t('no_message_provided'));
     try {
       if (config.logChannelId) {
         const channel = await client.channels.fetch(config.logChannelId);
         if (channel && channel.isTextBased()) {
           await channel.send(msg);
-          console.log('[BOT] Üzenet elküldve a log csatornába.');
+          console.log(t('message_sent_to_log_channel'));
         } else {
-          console.log('[BOT] A log csatorna nem szöveges típusú.');
+          console.log(t('log_channel_not_text'));
         }
       } else {
-        console.log('[BOT] Nincs beállítva logChannelId a configban.');
+        console.log(t('log_channel_not_configured'));
       }
     } catch (e) {
-      console.error('[BOT] Nem sikerült elküldeni az üzenetet:', e);
+      console.error(t('failed_to_send_message'), e);
     }
   } else if (cmd.startsWith('broadcast ')) {
     const type = cmd.slice(10).trim().toLowerCase();
@@ -156,7 +157,7 @@ rl.on('line', async (input) => {
     } else if (type === 'restart') {
       message = ':arrows_counterclockwise: **A bot újraindul!** Kérjük, várj néhány másodpercet.';
     } else {
-      return console.log('[BOT] Ismeretlen broadcast típus. Használat: broadcast <stop|dev|restart>');
+      return console.log(t('unknown_broadcast_type'));
     }
     try {
       const guilds = client.guilds.cache;
@@ -173,9 +174,9 @@ rl.on('line', async (input) => {
           } catch {}
         }
       }
-      console.log(`[BOT] Broadcast elküldve ${count} szerver log csatornájába.`);
+      console.log(t('broadcast_sent', { count }));
     } catch (e) {
-      console.error('[BOT] Broadcast hiba:', e);
+      console.error(t('broadcast_error'), e);
     }
   } else if (cmd === 'guilds') {
     // List all guilds
@@ -186,14 +187,14 @@ rl.on('line', async (input) => {
     // List users in a guild
     const guildId = cmd.slice(6).trim();
     const guild = client.guilds.cache.get(guildId);
-    if (!guild) return console.log('[BOT] Nincs ilyen guild.');
+    if (!guild) return console.log(t('guild_not_found'));
     try {
       await guild.members.fetch();
       for (const [id, member] of guild.members.cache) {
         console.log(`[USER] ${member.user.tag} (${id})`);
       }
     } catch (e) {
-      console.error('[BOT] Nem sikerült lekérni a tagokat:', e);
+      console.error(t('failed_to_fetch_members'), e);
     }
   } else if (cmd.startsWith('eval ')) {
     // Evaluate JS code
@@ -201,20 +202,20 @@ rl.on('line', async (input) => {
     try {
       // eslint-disable-next-line no-eval
       const result = await eval(code);
-      console.log('[EVAL]', result);
+      console.log(t('eval_result'), result);
     } catch (e) {
-      console.error('[EVAL ERROR]', e);
+      console.error(t('eval_error'), e);
     }
   } else if (cmd === 'help') {
-    console.log('[BOT] Konzol parancsok:');
-    console.log('  restart                - Bot újraindítása');
-    console.log('  stop                   - Bot leállítása');
-    console.log('  say <üzenet>           - Üzenet küldése a log csatornába');
-    console.log('  broadcast <stop|dev|restart> - Üzenet minden szerver log csatornájába');
-    console.log('  guilds                 - Szerverek listázása');
-    console.log('  users <guildId>        - Felhasználók listázása egy szerveren');
-    console.log('  eval <js>              - JavaScript kód futtatása (veszélyes!)');
-    console.log('  help                   - Ez a lista');
+    console.log(t('console_commands_help_title'));
+    console.log(t('console_commands_help_restart'));
+    console.log(t('console_commands_help_stop'));
+    console.log(t('console_commands_help_say'));
+    console.log(t('console_commands_help_broadcast'));
+    console.log(t('console_commands_help_guilds'));
+    console.log(t('console_commands_help_users'));
+    console.log(t('console_commands_help_eval'));
+    console.log(t('console_commands_help_help'));
   } else if (cmd.startsWith('db ')) {
     const args = cmd.slice(3).trim().split(' ');
     const sub = args[0];
@@ -284,7 +285,7 @@ rl.on('line', async (input) => {
       console.log('[BOT] Ismeretlen db parancs. Írd be: db help');
     }
   } else {
-    console.log('[BOT] Ismeretlen parancs:', cmd);
+    console.log(t('unknown_command'), cmd);
   }
 });
 
