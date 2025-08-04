@@ -28,6 +28,7 @@ client = new Client({
 const dev = false; // Set to true to enable debug logging
 
 client.commands = new Collection();
+client.cooldowns = new Collection();
 
 // Dynamically load commands
 const commandFolders = fs.readdirSync('./src/commands');
@@ -58,10 +59,34 @@ for (const file of eventFiles) {
 
 // Only handle slash commands
 client.on('interactionCreate', async interaction => {
-  if (dev) console.log('[INTERACTION]', interaction.commandName, interaction.user?.tag, interaction.options?.data);
+  if (dev) logger.debug('[INTERACTION]', interaction.commandName, interaction.user?.tag, interaction.options?.data);
   if (!interaction.isCommand()) return;
   const command = client.commands.get(interaction.commandName);
   if (!command) return;
+
+  // Cooldown logic
+  const { cooldowns } = client;
+
+  if (!cooldowns.has(command.data.name)) {
+    cooldowns.set(command.data.name, new Collection());
+  }
+
+  const now = Date.now();
+  const timestamps = cooldowns.get(command.data.name);
+  const cooldownAmount = (command.cooldown || 3) * 1000;
+
+  if (timestamps.has(interaction.user.id)) {
+    const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount;
+
+    if (now < expirationTime) {
+      const timeLeft = (expirationTime - now) / 1000;
+      return interaction.reply({ content: `Please wait ${timeLeft.toFixed(1)} more second(s) before reusing the \`${command.data.name}\` command.`, ephemeral: true });
+    }
+  }
+
+  timestamps.set(interaction.user.id, now);
+  setTimeout(() => timestamps.delete(interaction.user.id), cooldownAmount);
+
   try {
     await command.execute(interaction);
   } catch (error) {
@@ -77,55 +102,22 @@ client.on('interactionCreate', async interaction => {
 
 client.login(config.token);
 
-// --- Send bot start embed notification to all servers ---
-client.once('ready', async () => {
-  try {
-    const embed = new EmbedBuilder()
-      .setTitle('Bot Started')
-      .setDescription('The bot is now online and ready!')
-      .setColor(0x3b82f6)
-      .setTimestamp()
-      .setFooter({ text: 'Nyx Bot', iconURL: client.user.displayAvatarURL() });
-    let count = 0;
-    for (const [guildId, guild] of client.guilds.cache) {
-      // Try to get logChannel from config or guild config
-      let logChannelId = config.logChannelId;
-      try {
-        const guildConfig = await readUser('guilds', guildId, guildId);
-        if (guildConfig && guildConfig.logChannel) logChannelId = guildConfig.logChannel;
-      } catch {}
-      if (logChannelId) {
-        try {
-          const channel = await client.channels.fetch(logChannelId);
-          if (channel && channel.isTextBased()) {
-            await channel.send({ embeds: [embed] });
-            count++;
-          }
-        } catch {}
-      }
-    }
-    console.log(`[BOTSTART] Embed sent to ${count} server log channels.`);
-  } catch (e) {
-    console.error('[BOTSTART EMBED ERROR]', e);
-  }
-});
-
 // --- Automatikus parancs regisztráció (induláskor) ---
 if (process.env.AUTO_REGISTER_COMMANDS === 'true') {
   const { exec } = require('child_process');
   exec('node ./scripts/register-commands.js', (err, stdout, stderr) => {
     if (err) {
-      console.error('[COMMAND REGISTER ERROR]', err);
+      logger.error('[COMMAND REGISTER ERROR]', err);
     } else {
-      console.log('[COMMAND REGISTER]', stdout);
-      if (stderr) console.error('[COMMAND REGISTER STDERR]', stderr);
+      logger.info('[COMMAND REGISTER]', stdout);
+      if (stderr) logger.error('[COMMAND REGISTER STDERR]', stderr);
     }
   });
 }
 
 // --- GLOBAL ERROR HANDLING: Never exit the bot on error ---
 process.on('uncaughtException', (err) => {
-  console.error('[UNCAUGHT EXCEPTION]', err);
+  logger.error('[UNCAUGHT EXCEPTION]', err);
   if (config.errorLogChannel) {
     (async () => {
       try {
@@ -133,12 +125,12 @@ process.on('uncaughtException', (err) => {
         if (channel && channel.isTextBased()) {
           await channel.send({ content: `**[UNCAUGHT EXCEPTION]**\n\n${err?.stack || err}` });
         }
-      } catch (e) { console.error('[ERRORLOG SEND ERROR]', e); }
+      } catch (e) { logger.error('[ERRORLOG SEND ERROR]', e); }
     })();
   }
 });
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('[UNHANDLED REJECTION]', reason);
+  logger.error('[UNHANDLED REJECTION]', reason);
   if (config.errorLogChannel) {
     (async () => {
       try {
@@ -146,213 +138,13 @@ process.on('unhandledRejection', (reason, promise) => {
         if (channel && channel.isTextBased()) {
           await channel.send({ content: `**[UNHANDLED REJECTION]**\n\n${reason?.stack || reason}` });
         }
-      } catch (e) { console.error('[ERRORLOG SEND ERROR]', e); }
+      } catch (e) { logger.error('[ERRORLOG SEND ERROR]', e); }
     })();
   }
 });
 
-// --- Console commands: restart, stop, say ---
-const readline = require('readline');
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-rl.on('line', async (input) => {
-  const cmd = input.trim();
-  if (cmd === 'restart') {
-    console.log(t('bot_restarting'));
-    process.exit(2);
-  } else if (cmd === 'stop') {
-    console.log(t('bot_stopping'));
-    process.exit(0);
-  } else if (cmd.startsWith('say ')) {
-    const msg = cmd.slice(4).trim();
-    if (!msg) return console.log(t('no_message_provided'));
-    try {
-      if (config.logChannelId) {
-        const channel = await client.channels.fetch(config.logChannelId);
-        if (channel && channel.isTextBased()) {
-          await channel.send(msg);
-          console.log(t('message_sent_to_log_channel'));
-        } else {
-          console.log(t('log_channel_not_text'));
-        }
-      } else {
-        console.log(t('log_channel_not_configured'));
-      }
-    } catch (e) {
-      console.error(t('failed_to_send_message'), e);
-    }
-  } else if (cmd.startsWith('broadcast ')) {
-    const type = cmd.slice(10).trim().toLowerCase();
-    let message;
-    if (type === 'stop') {
-      message = ':octagonal_sign: **A bot teljesen leáll!** Minden funkció szünetel.';
-    } else if (type === 'dev') {
-      message = ':hammer_and_wrench: **A bot fejlesztési módban van!** Előfordulhatnak hibák vagy újraindítások.';
-    } else if (type === 'restart') {
-      message = ':arrows_counterclockwise: **A bot újraindul!** Kérjük, várj néhány másodpercet.';
-    } else if (type === 'update') {
-      message = ':rocket: **A bot frissült!** Új funkciók vagy hibajavítások érkeztek.';
-    } else if (type === 'online') {
-      message = ':green_circle: **A bot ismét online!** Minden funkció elérhető.';
-    } else if (type === 'offline') {
-      message = ':red_circle: **A bot jelenleg offline!** Funkciók nem elérhetők.';
-    } else if (type === 'custom') {
-      rl.question('Add meg az üzenetet: ', async (customMsg) => {
-        if (!customMsg) return console.log('[BOT] Nincs üzenet.');
-        try {
-          const guilds = client.guilds.cache;
-          let count = 0;
-          for (const [guildId] of guilds) {
-            const config = await readUser('guilds', guildId, guildId);
-            if (config && config.logChannel) {
-              try {
-                const channel = await client.channels.fetch(config.logChannel);
-                if (channel && channel.isTextBased()) {
-                  await channel.send(customMsg);
-                  count++;
-                }
-              } catch {}
-            }
-          }
-          console.log(`[BOT] Custom broadcast elküldve ${count} szerver log csatornájába.`);
-        } catch (e) {
-          console.error('[BOT] Custom broadcast hiba:', e);
-        }
-      });
-      return;
-    } else {
-      return console.log(t('unknown_broadcast_type'));
-
-    }
-    try {
-      const guilds = client.guilds.cache;
-      let count = 0;
-      for (const [guildId] of guilds) {
-        const config = await readUser('guilds', guildId, guildId);
-        if (config && config.logChannel) {
-          try {
-            const channel = await client.channels.fetch(config.logChannel);
-            if (channel && channel.isTextBased()) {
-              await channel.send(message);
-              count++;
-            }
-          } catch {}
-        }
-      }
-      console.log(t('broadcast_sent', { count }));
-    } catch (e) {
-      console.error(t('broadcast_error'), e);
-    }
-  } else if (cmd === 'guilds') {
-    // List all guilds
-    for (const [id, guild] of client.guilds.cache) {
-      console.log(`[GUILD] ${guild.name} (${id})`);
-    }
-  } else if (cmd.startsWith('users ')) {
-    // List users in a guild
-    const guildId = cmd.slice(6).trim();
-    const guild = client.guilds.cache.get(guildId);
-    if (!guild) return console.log(t('guild_not_found'));
-    try {
-      await guild.members.fetch();
-      for (const [id, member] of guild.members.cache) {
-        console.log(`[USER] ${member.user.tag} (${id})`);
-      }
-    } catch (e) {
-      console.error(t('failed_to_fetch_members'), e);
-    }
-  } else if (cmd.startsWith('eval ')) {
-    // Evaluate JS code
-    const code = cmd.slice(5);
-    try {
-      // eslint-disable-next-line no-eval
-      const result = await eval(code);
-      console.log(t('eval_result'), result);
-    } catch (e) {
-      console.error(t('eval_error'), e);
-    }
-  } else if (cmd === 'help') {
-    console.log(t('console_commands_help_title'));
-    console.log(t('console_commands_help_restart'));
-    console.log(t('console_commands_help_stop'));
-    console.log(t('console_commands_help_say'));
-    console.log(t('console_commands_help_broadcast'));
-    console.log(t('console_commands_help_guilds'));
-    console.log(t('console_commands_help_users'));
-    console.log(t('console_commands_help_eval'));
-    console.log(t('console_commands_help_help'));
-
-  } else if (cmd.startsWith('db ')) {
-    const args = cmd.slice(3).trim().split(' ');
-    const sub = args[0];
-    const type = args[1];
-    const guildId = args[2];
-    const userId = args[3];
-    const json = args.slice(4).join(' ');
-    const baseDir = require('path').join(__dirname, '../data');
-    const fsPromises = require('fs').promises;
-    if (sub === 'list') {
-      // db list <type>
-      if (!type) return console.log('Használat: db list <type>');
-      try {
-        const files = await fsPromises.readdir(require('path').join(baseDir, type));
-        console.log(`[DB] ${type} fájlok:`, files);
-      } catch (e) {
-        console.error('[DB] Nem sikerült listázni:', e);
-      }
-    } else if (sub === 'get') {
-      // db get <type> <guildId> <userId>
-      if (!type || !guildId || !userId) return console.log('Használat: db get <type> <guildId> <userId>');
-      try {
-        const data = await readUser(type, userId, guildId);
-        console.dir(data, { depth: 5 });
-      } catch (e) {
-        console.error('[DB] Nem sikerült lekérni:', e);
-      }
-    } else if (sub === 'set') {
-      // db set <type> <guildId> <userId> <json>
-      if (!type || !guildId || !userId || !json) return console.log('Használat: db set <type> <guildId> <userId> <json>');
-      try {
-        const obj = JSON.parse(json);
-        await writeUser(type, userId, guildId, obj);
-        console.log('[DB] Sikeres mentés.');
-      } catch (e) {
-        console.error('[DB] Nem sikerült menteni:', e);
-      }
-    } else if (sub === 'delete') {
-      // db delete <type> <guildId> <userId>
-      if (!type || !guildId || !userId) return console.log('Használat: db delete <type> <guildId> <userId>');
-      try {
-        const file = require('path').join(baseDir, type, `${guildId}_${userId}.json`);
-        await fsPromises.unlink(file);
-        console.log('[DB] Fájl törölve.');
-      } catch (e) {
-        console.error('[DB] Nem sikerült törölni:', e);
-      }
-    } else if (sub === 'raw') {
-      // db raw <type> <guildId> <userId>
-      if (!type || !guildId || !userId) return console.log('Használat: db raw <type> <guildId> <userId>');
-      try {
-        const file = require('path').join(baseDir, type, `${guildId}_${userId}.json`);
-        const raw = await fsPromises.readFile(file, 'utf8');
-        console.log(raw);
-      } catch (e) {
-        console.error('[DB] Nem sikerült olvasni:', e);
-      }
-    } else if (sub === 'help') {
-      console.log('[BOT] DB parancsok:');
-      console.log('  db list <type>                  - Fájlok listázása (pl. profiles, guilds, logs)');
-      console.log('  db get <type> <guildId> <userId>    - Adat lekérdezése (objektum)');
-      console.log('  db set <type> <guildId> <userId> <json> - Adat beállítása (JSON string)');
-      console.log('  db delete <type> <guildId> <userId>     - Fájl törlése');
-      console.log('  db raw <type> <guildId> <userId>       - Fájl tartalom (nyers JSON)');
-      console.log('  db help                               - Ez a lista');
-    } else {
-      console.log('[BOT] Ismeretlen db parancs. Írd be: db help');
-    }
-  } else {
-    console.log(t('unknown_command'), cmd);
-  }
-});
+// Initialize console commands
+require('./console').initialize(client);
 
 // Escrow all existing data files on startup (one-time migration)
 try {

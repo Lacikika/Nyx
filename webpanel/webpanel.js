@@ -3,199 +3,55 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const session = require('express-session');
-const bcrypt = require('bcryptjs');
-const { readUser, writeUser } = require('../utils/jsondb');
-const rateLimit = require('express-rate-limit');
-const i18n = require('i18n');
-const passport = require('passport');
-const DiscordStrategy = require('passport-discord').Strategy;
+const cookieParser = require('cookie-parser');
+const config = require('../src/config');
+const t = require('../utils/locale');
 const app = express();
 
-// i18n setup
-i18n.configure({
-  locales: ['en', 'hu'],
-  directory: path.join(__dirname, 'locales'),
-  defaultLocale: 'en',
-  queryParameter: 'lang',
-  cookie: 'lang',
-  autoReload: true,
-  updateFiles: false,
-  objectNotation: true
-});
-app.use(i18n.init);
-
-// Language switcher middleware (query or session)
-app.use((req, res, next) => {
-  if (req.query.lang) {
-    res.cookie('lang', req.query.lang);
-    req.setLocale(req.query.lang);
-  }
-  res.locals.__ = res.__ = req.__ = req.__ || req.__;
-  next();
-});
-
-// Only require Discord login for protected pages
-function requireDiscordLoginIfProtected(req, res, next) {
-  const openRoutes = ['/login', '/auth/discord', '/auth/discord/callback'];
-  if (openRoutes.includes(req.path)) {
-    console.log('Open route:', req.path);
-    return next();
-  }
-  console.log('Protected route:', req.path);
-  return requireDiscordLogin(req, res, next);
-}
-// Rate limiter for login route: max 5 attempts per 15 minutes per IP
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
-  message: 'Too many login attempts from this IP, please try again after 15 minutes.',
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true // Only count failed attempts
-});
-// Session setup
-app.use(session({
-  secret: process.env.WEBPANEL_SESSION_SECRET || 'nyxsecret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000
-  }
-}));
-app.use(passport.initialize());
-app.use(passport.session());
-// Theme toggle route
-app.get('/theme/:mode', (req, res) => {
-  if (!req.session) req.session = {};
-  req.session.theme = req.params.mode === 'dark' ? 'dark' : 'light';
-  res.redirect(req.headers.referer || '/');
-});
-// Theme middleware
-app.use((req, res, next) => {
-  res.locals.theme = (req.session && req.session.theme) ? req.session.theme : 'light';
-  next();
-});
-// Notification middleware for success/error popups
-app.use((req, res, next) => {
-  if (!req.session) req.session = {};
-  res.locals.success = req.session.success || null;
-  res.locals.error = req.session.error || null;
-  req.session.success = null;
-  req.session.error = null;
-  next();
-});
-// API endpoints for bot stats and data
-app.get('/api/stats', (req, res) => {
-  // Example stats, replace with real logic
-  res.json({
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    users: 123,
-    guilds: 10
-  });
-});
-app.get('/api/data', (req, res) => {
-  // Example data, replace with real logic
-  res.json({
-    logs: [],
-    profiles: [],
-    guilds: []
-  });
-});
-// Global error handler for unified feedback
-app.use((err, req, res, next) => {
-  console.error('Webpanel error:', err);
-  if (!req.session) req.session = {};
-  req.session.error = err.message || 'Unknown error occurred.';
-  res.redirect(req.originalUrl || '/');
-});
-// Csak ezután hívjuk meg, hogy az isAuthenticated elérhető legyen
-app.use(requireDiscordLoginIfProtected);
-// Passport Discord OAuth2 setup
-passport.serializeUser((user, done) => done(null, user));
-passport.deserializeUser((obj, done) => done(null, obj));
-passport.use(new DiscordStrategy({
-  clientID: process.env.DISCORD_CLIENT_ID || 'YOUR_CLIENT_ID',
-  clientSecret: process.env.DISCORD_CLIENT_SECRET || 'YOUR_CLIENT_SECRET',
-  callbackURL: process.env.DISCORD_CALLBACK_URL || 'http://localhost:50249/auth/discord/callback',
-  scope: ['identify', 'guilds']
-}, (accessToken, refreshToken, profile, done) => {
-  return done(null, profile);
-}));
-
-function requireDiscordLogin(req, res, next) {
-  // Engedélyezzük, ha Discorddal vagy lokális fiókkal be van jelentkezve
-  console.log('requireDiscordLogin:', {
-    isAuthenticated: typeof req.isAuthenticated === 'function' ? req.isAuthenticated() : undefined,
-    sessionUser: req.session.user,
-    user: req.user
-  });
-  if (typeof req.isAuthenticated === 'function' && req.isAuthenticated()) return next();
-  if (req.session.user) return next();
-  console.log('Redirecting to /auth/discord');
-  res.redirect('/auth/discord');
-}
 app.use(express.urlencoded({ extended: true }));
-// Middleware: require login
-function requireLogin(req, res, next) {
-  if (req.session.user || req.user) {
-    return next();
+app.use(cookieParser());
+
+/**
+ * Authentication middleware for the web panel.
+ * If a password is set in the config, it checks for a valid password cookie.
+ * If the cookie is not present or invalid, it redirects to the login page.
+ * @param {import('express').Request} req - The Express request object.
+ * @param {import('express').Response} res - The Express response object.
+ * @param {import('express').NextFunction} next - The Express next function.
+ */
+function auth(req, res, next) {
+  if (config.webpanelPassword) {
+    if (req.cookies.password === config.webpanelPassword) {
+      return next();
+    }
+    return res.redirect('/login');
   }
-  return res.redirect('/login');
+  next();
 }
-// Webpanel user DB helpers
-const WEBPANEL_USER_TYPE = 'webpanel_users';
-const WEBPANEL_USER_GUILD = 'global';
-async function getWebpanelUser(username) {
-  const users = await readUser(WEBPANEL_USER_TYPE, username, WEBPANEL_USER_GUILD);
-  return users && users.hash ? users : null;
-}
-async function setWebpanelUser(username, hash) {
-  await writeUser(WEBPANEL_USER_TYPE, username, WEBPANEL_USER_GUILD, { hash });
-}
-// Discord OAuth2 login routes
-app.get('/auth/discord', passport.authenticate('discord'));
-app.get('/auth/discord/callback', passport.authenticate('discord', {
-  failureRedirect: '/login'
-}), (req, res, next) => {
-  console.log('Discord callback, req.user:', req.user);
-  console.log('Discord callback, session:', req.session);
-  if (req.user) {
-    req.login(req.user, function(err) {
-      if (err) {
-        console.log('req.login error:', err);
-        return next(err);
-      }
-      console.log('User logged in, session:', req.session);
-      res.redirect('/');
-    });
-  } else {
-    console.log('No user in callback!');
-    res.redirect('/login');
-  }
-});
-app.get('/logout', (req, res) => {
-  req.logout(() => res.redirect('/login'));
-});
-// Login page (fallback for local login)
+
+// Renders the login page.
 app.get('/login', (req, res) => {
-  res.render('login', { error: null, __: res.__ });
+  res.render('login', { t, error: null });
 });
-app.post('/login', loginLimiter, async (req, res) => {
-  const { username, password } = req.body;
-  const user = await getWebpanelUser(username);
-  if (!user || !user.hash || !(await bcrypt.compare(password, user.hash))) {
-    return res.render('login', { error: res.__('login.invalid'), __: res.__ });
+
+// Handles the login form submission.
+app.post('/login', (req, res) => {
+  if (req.body.password === config.webpanelPassword) {
+    res.cookie('password', req.body.password, { maxAge: 900000, httpOnly: true });
+    res.redirect('/');
+  } else {
+    res.render('login', { t, error: t('webpanel_invalid_password') });
   }
-  req.session.user = username;
-  res.redirect('/');
+});
+
+// Logs the user out by clearing the password cookie.
+app.get('/logout', (req, res) => {
+  res.clearCookie('password');
+  res.redirect('/login');
 });
 
 // Console page: show logs from latest bot log file (console.log, error.log, etc.)
-app.get('/console', (req, res) => {
+app.get('/console', auth, (req, res) => {
   // Try to read logs/console.log, logs/error.log, logs/audit.log, etc.
   const logDir = path.join(__dirname, '../data/logs');
   let logFiles = ['console.log', 'error.log', 'audit.log'];
@@ -215,7 +71,7 @@ app.get('/console', (req, res) => {
       } catch {}
     }
   }
-  res.render('console', { logs });
+  res.render('console', { t, logs });
 });
 
 // Use the correct 32-byte (64 hex char) key
@@ -245,14 +101,12 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 
-
-app.get('/', (req, res) => {
+app.get('/', auth, (req, res) => {
   res.redirect('/console');
-
 });
 
 // Statistics page
-app.get('/statistics', requireLogin, (req, res) => {
+app.get('/statistics', auth, (req, res) => {
   const logs = listFiles('logs');
   const profiles = listFiles('profiles');
   const guilds = listFiles('guilds');
@@ -263,103 +117,39 @@ app.get('/statistics', requireLogin, (req, res) => {
     total: logs.length + profiles.length + guilds.length,
     updated: new Date().toLocaleString()
   };
-  res.render('statistics', { stats });
+  res.render('statistics', { t, stats });
 });
 
 // Blank page
-app.get('/blank', requireLogin, (req, res) => {
-  res.render('blank');
+app.get('/blank', auth, (req, res) => {
+  res.render('blank', { t });
 });
 
-// Metadata search endpoint
-const { searchMetadata } = require('../utils/jsondb');
-app.get('/search', requireLogin, async (req, res) => {
+// Search endpoint for files by name or ID
+app.get('/search', auth, (req, res) => {
   const q = (req.query.q || '').toLowerCase();
-  const date_from = req.query.date_from;
-  const date_to = req.query.date_to;
-  const role = (req.query.role || '').toLowerCase();
-  if (!q && !date_from && !date_to && !role) return res.redirect('/');
+  if (!q) return res.redirect('/');
+  const types = ['logs', 'profiles', 'guilds'];
   let results = [];
-  try {
-    results = await searchMetadata(q);
-    // Filter by date range if provided
-    if (date_from) {
-      const from = new Date(date_from);
-      results = results.filter(meta => meta.time && new Date(meta.time) >= from);
-    }
-    if (date_to) {
-      const to = new Date(date_to);
-      results = results.filter(meta => meta.time && new Date(meta.time) <= to);
-    }
-    // Filter by role if provided
-    if (role) {
-      results = results.filter(meta => meta.role && meta.role.toLowerCase().includes(role));
-    }
-  } catch (e) {
-    results = [];
+  for (const type of types) {
+    const files = listFiles(type);
+    files.forEach(file => {
+      if (file.toLowerCase().includes(q)) {
+        results.push({ type, file });
+      }
+    });
   }
-  res.render('webpanel_search', { q, results, date_from, date_to, role });
+  res.render('webpanel_search', { t, q, results });
 });
 
-app.get('/data/:type/:file', requireLogin, (req, res) => {
+app.get('/data/:type/:file', auth, (req, res) => {
   const filePath = path.join(__dirname, '../data', req.params.type, req.params.file);
   try {
     const buf = fs.readFileSync(filePath);
     const json = JSON.parse(decrypt(buf));
-    // If entries exist, sort by time desc
-    if (Array.isArray(json.entries)) {
-      json.entries.sort((a, b) => new Date(b.time || b.timestamp) - new Date(a.time || a.timestamp));
-    }
-    res.render('webpanel_view', { file: req.params.file, type: req.params.type, json });
+    res.render('webpanel_view', { t, file: req.params.file, type: req.params.type, json });
   } catch (e) {
     res.status(500).send('Failed to decrypt or parse file.');
-  }
-});
-
-// Guild config view route (GET + POST for editing roles)
-app.get('/guildconfig/:file', requireLogin, async (req, res) => {
-  const filePath = path.join(__dirname, '../data/guilds', req.params.file);
-  try {
-    const buf = fs.readFileSync(filePath);
-    const json = JSON.parse(decrypt(buf));
-    // Get available roles from Discord API if user is Discord-authenticated
-    let availableRoles = [];
-    if (req.user && req.user.guilds) {
-      const guildId = req.params.file.split('_')[0];
-      const guild = req.user.guilds.find(g => g.id === guildId);
-      // Discord OAuth2 only provides basic guild info, not roles by default
-      // If roles are missing, fallback to empty array
-      if (guild && Array.isArray(guild.roles)) {
-        availableRoles = guild.roles;
-      }
-    }
-    // Always pass availableRoles, even if empty
-    res.render('webpanel_view', { file: req.params.file, type: 'guilds', json, availableRoles: availableRoles });
-  } catch (e) {
-    res.status(500).send('Failed to decrypt or parse guild config file.');
-  }
-});
-
-app.post('/guildconfig/:file', requireLogin, async (req, res) => {
-  const filePath = path.join(__dirname, '../data/guilds', req.params.file);
-  try {
-    const buf = fs.readFileSync(filePath);
-    let json = JSON.parse(decrypt(buf));
-    // Update roles from form
-    if (req.body.roles) {
-      json.roles = Array.isArray(req.body.roles) ? req.body.roles : [req.body.roles];
-    }
-    // Save updated config
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key, 'hex'), iv);
-    let encrypted = cipher.update(Buffer.from(JSON.stringify(json)));
-    encrypted = Buffer.concat([iv, encrypted, cipher.final()]);
-    fs.writeFileSync(filePath, encrypted);
-    req.session.success = 'Guild config updated!';
-    res.redirect(`/guildconfig/${req.params.file}`);
-  } catch (e) {
-    req.session.error = 'Failed to update guild config.';
-    res.redirect(`/guildconfig/${req.params.file}`);
   }
 });
 

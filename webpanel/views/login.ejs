@@ -1,321 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title><%= __("login.title") %></title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= t('webpanel_login_title') %></title>
   <style>
-    * {
+    body {
+      font-family: sans-serif;
+      background-color: #2c2f33;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       margin: 0;
-      padding: 0;
-      box-sizing: border-box;
     }
-    
-    body.theme-dark {
-      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
-      color: #e2e8f0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
+    .login-container {
+      background-color: #23272a;
+      padding: 2rem;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     }
-    body.theme-light {
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-      color: #1e293b;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
-    
-    .container.theme-dark {
-      background: rgba(15, 15, 35, 0.8);
-      backdrop-filter: blur(20px);
-      border-radius: 1rem;
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-      padding: 2.5rem;
-      width: 100%;
-      max-width: 400px;
-    }
-    .container.theme-light {
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(20px);
-      border-radius: 1rem;
-      border: 1px solid rgba(100, 116, 139, 0.1);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-      padding: 2.5rem;
-      width: 100%;
-      max-width: 400px;
-    }
-    
-    h1.theme-dark {
-      color: #e2e8f0;
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.025em;
-      margin-bottom: 2rem;
+    h1 {
       text-align: center;
-      background: linear-gradient(135deg, #7c3aed, #3b82f6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    h1.theme-light {
-      color: #1e293b;
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.025em;
-      margin-bottom: 2rem;
-      text-align: center;
-      background: linear-gradient(135deg, #059669, #0ea5e9);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .form-group {
       margin-bottom: 1.5rem;
     }
-    
-    input.theme-dark {
-      background: rgba(15, 15, 35, 0.8);
-      color: #e2e8f0;
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 0.5rem;
-      padding: 0.875rem 1rem;
-      font-size: 1rem;
-      transition: all 0.2s ease;
-      font-family: inherit;
+    input[type="password"] {
       width: 100%;
-    }
-    input.theme-light {
-      background: rgba(248, 250, 252, 0.9);
-      color: #1e293b;
-      border: 1px solid rgba(100, 116, 139, 0.2);
-      border-radius: 0.5rem;
-      padding: 0.875rem 1rem;
-      font-size: 1rem;
-      transition: all 0.2s ease;
-      font-family: inherit;
-      width: 100%;
-    }
-    
-    input.theme-dark:focus {
-      outline: none;
-      border-color: #7c3aed;
-      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
-    }
-    input.theme-light:focus {
-      outline: none;
-      border-color: #059669;
-      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
-    }
-    
-    button.theme-dark {
-      background: linear-gradient(135deg, #7c3aed, #3b82f6);
-      color: white;
-      border: none;
-      border-radius: 0.5rem;
-      padding: 0.875rem 1.5rem;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-family: inherit;
-      width: 100%;
-      margin-bottom: 1rem;
-    }
-    button.theme-light {
-      background: linear-gradient(135deg, #059669, #0ea5e9);
-      color: white;
-      border: none;
-      border-radius: 0.5rem;
-      padding: 0.875rem 1.5rem;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-family: inherit;
-      width: 100%;
-      margin-bottom: 1rem;
-    }
-    
-    button.theme-dark:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
-    }
-    button.theme-light:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 25px rgba(5, 150, 105, 0.3);
-    }
-    
-    .discord-btn {
-      background: linear-gradient(135deg, #5865f2, #4752c4) !important;
-    }
-    
-    .discord-btn:hover {
-      box-shadow: 0 10px 25px rgba(88, 101, 242, 0.3) !important;
-    }
-    
-    .notification {
-      padding: 1rem;
-      border-radius: 0.5rem;
-      margin-bottom: 1.5rem;
-      font-weight: 500;
-    }
-    
-    .notification.success {
+      padding: 0.5rem;
+      border: 1px solid #7289da;
+      border-radius: 3px;
+      background-color: #2c2f33;
       color: #fff;
-      background: linear-gradient(135deg, #10b981, #059669);
-      border: none;
     }
-    
-    .notification.error {
+    button {
+      width: 100%;
+      padding: 0.7rem;
+      border: none;
+      border-radius: 3px;
+      background-color: #7289da;
       color: #fff;
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      border: none;
+      cursor: pointer;
+      margin-top: 1rem;
     }
-    
-    .divider {
-      display: flex;
-      align-items: center;
-      margin: 1.5rem 0;
-      color: #94a3b8;
-      font-size: 0.875rem;
-    }
-    
-    .divider::before,
-    .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: rgba(148, 163, 184, 0.2);
-    }
-    
-    .divider span {
-      padding: 0 1rem;
-    }
-    
-    .theme-toggle {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      display: flex;
-      gap: 0.5rem;
-      z-index: 1000;
-    }
-    
-    .theme-toggle a.theme-dark {
-      color: #94a3b8;
-      background: rgba(15, 15, 35, 0.8);
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.375rem;
-      text-decoration: none;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      backdrop-filter: blur(10px);
-    }
-    .theme-toggle a.theme-light {
-      color: #64748b;
-      background: rgba(255, 255, 255, 0.8);
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.375rem;
-      text-decoration: none;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-      border: 1px solid rgba(100, 116, 139, 0.1);
-      backdrop-filter: blur(10px);
-    }
-    
-    .theme-toggle a.active {
-      background: linear-gradient(135deg, #7c3aed, #3b82f6) !important;
-      color: white !important;
-      border-color: transparent !important;
-    }
-    
-    .language-toggle {
+    .error {
+      color: #f44336;
       text-align: center;
-      margin-top: 1.5rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid rgba(148, 163, 184, 0.1);
-    }
-    
-    .language-toggle a {
-      color: #94a3b8;
-      text-decoration: none;
-      font-size: 0.875rem;
-      margin: 0 0.5rem;
-      transition: color 0.2s ease;
-    }
-    
-    .language-toggle a:hover {
-      color: #e2e8f0;
-    }
-    
-    @media (max-width: 480px) {
-      .container.theme-dark,
-      .container.theme-light {
-        padding: 2rem 1.5rem;
-        margin: 1rem;
-      }
-      
-      h1.theme-dark,
-      h1.theme-light {
-        font-size: 1.75rem;
-      }
-      
-      .theme-toggle {
-        position: static;
-        justify-content: center;
-        margin-bottom: 2rem;
-      }
+      margin-top: 1rem;
     }
   </style>
 </head>
-<body class="theme-<%= theme %>">
-  <div class="theme-toggle">
-    <a href="/theme/light" class="<%= theme === 'light' ? 'active ' : '' %>theme-light">☀️ Light</a>
-    <a href="/theme/dark" class="<%= theme === 'dark' ? 'active ' : '' %>theme-dark">🌙 Dark</a>
-  </div>
-  
-  <div class="container theme-<%= theme %>">
-    <h1 class="theme-<%= theme %>"><%= __("login.title") %></h1>
-    
-    <% if (success) { %>
-      <div class="notification success"><%= success %></div>
-    <% } %>
-    <% if (error) { %>
-      <div class="notification error"><%= error %></div>
-    <% } %>
-    
-    <form method="post" action="/login">
-      <div class="form-group">
-        <input type="text" name="username" placeholder="<%= __("login.username") %>" required class="theme-<%= theme %>" />
-      </div>
-      <div class="form-group">
-        <input type="password" name="password" placeholder="<%= __("login.password") %>" required class="theme-<%= theme %>" />
-      </div>
-      <button type="submit" class="theme-<%= theme %>"><%= __("login.button") %></button>
+<body>
+  <div class="login-container">
+    <h1><%= t('webpanel_login_title') %></h1>
+    <form method="POST" action="/login">
+      <input type="password" name="password" placeholder="<%= t('webpanel_password') %>" required>
+      <button type="submit"><%= t('webpanel_login_button') %></button>
     </form>
-    
-    <div class="divider">
-      <span>or</span>
-    </div>
-    
-    <form method="get" action="/auth/discord">
-      <button type="submit" class="theme-<%= theme %> discord-btn">🎮 Login with Discord</button>
-    </form>
-    
-    <div class="language-toggle">
-      <a href="?lang=en">🇺🇸 English</a>
-      <span>|</span>
-      <a href="?lang=hu">🇭🇺 Magyar</a>
-    </div>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
   </div>
 </body>
 </html>
