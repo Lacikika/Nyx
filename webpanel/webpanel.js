@@ -245,31 +245,10 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 
-app.get('/', async (req, res) => {
-  console.log('--- / route ---');
-  console.log('req.user:', req.user);
-  console.log('req.session:', req.session);
-  let allowedGuilds = [];
-  if (req.user && req.user.guilds) {
-    // Discord login: csak admin guild-eket mutatunk
-    const userGuilds = req.user.guilds.filter(g => (g.permissions & 0x8) === 0x8);
-    const allGuildConfigs = listFiles('guilds');
-    allowedGuilds = allGuildConfigs.filter(file => {
-      const guildId = file.split('_')[0];
-      return userGuilds.some(g => g.id === guildId);
-    });
-    console.log('Discord admin guilds:', allowedGuilds);
-  } else {
-    // Lokális login: mutassunk minden guild configot vagy üres listát
-    allowedGuilds = listFiles('guilds');
-    console.log('Local login guilds:', allowedGuilds);
-  }
-  res.render('webpanel_index', {
-    logs: listFiles('logs'),
-    profiles: listFiles('profiles'),
-    guilds: allowedGuilds,
-    user: req.user || req.session.user
-  });
+
+app.get('/', (req, res) => {
+  res.redirect('/console');
+
 });
 
 // Statistics page
@@ -386,7 +365,7 @@ app.post('/guildconfig/:file', requireLogin, async (req, res) => {
 
 
 function startWebPanel(port = 50249) {
-  app.listen(port, () => console.log(`Web panel running on http://116.202.112.154:${port}`));
+  app.listen(port, () => console.log(`Web panel running on http://localhost:${port}`));
 }
 
 // If run directly, start the server
