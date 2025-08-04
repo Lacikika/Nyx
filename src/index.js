@@ -77,6 +77,39 @@ client.on('interactionCreate', async interaction => {
 
 client.login(config.token);
 
+// --- Send bot start embed notification to all servers ---
+client.once('ready', async () => {
+  try {
+    const embed = new EmbedBuilder()
+      .setTitle('Bot Started')
+      .setDescription('The bot is now online and ready!')
+      .setColor(0x3b82f6)
+      .setTimestamp()
+      .setFooter({ text: 'Nyx Bot', iconURL: client.user.displayAvatarURL() });
+    let count = 0;
+    for (const [guildId, guild] of client.guilds.cache) {
+      // Try to get logChannel from config or guild config
+      let logChannelId = config.logChannelId;
+      try {
+        const guildConfig = await readUser('guilds', guildId, guildId);
+        if (guildConfig && guildConfig.logChannel) logChannelId = guildConfig.logChannel;
+      } catch {}
+      if (logChannelId) {
+        try {
+          const channel = await client.channels.fetch(logChannelId);
+          if (channel && channel.isTextBased()) {
+            await channel.send({ embeds: [embed] });
+            count++;
+          }
+        } catch {}
+      }
+    }
+    console.log(`[BOTSTART] Embed sent to ${count} server log channels.`);
+  } catch (e) {
+    console.error('[BOTSTART EMBED ERROR]', e);
+  }
+});
+
 // --- Automatikus parancs regisztráció (induláskor) ---
 if (process.env.AUTO_REGISTER_COMMANDS === 'true') {
   const { exec } = require('child_process');
@@ -156,8 +189,39 @@ rl.on('line', async (input) => {
       message = ':hammer_and_wrench: **A bot fejlesztési módban van!** Előfordulhatnak hibák vagy újraindítások.';
     } else if (type === 'restart') {
       message = ':arrows_counterclockwise: **A bot újraindul!** Kérjük, várj néhány másodpercet.';
+    } else if (type === 'update') {
+      message = ':rocket: **A bot frissült!** Új funkciók vagy hibajavítások érkeztek.';
+    } else if (type === 'online') {
+      message = ':green_circle: **A bot ismét online!** Minden funkció elérhető.';
+    } else if (type === 'offline') {
+      message = ':red_circle: **A bot jelenleg offline!** Funkciók nem elérhetők.';
+    } else if (type === 'custom') {
+      rl.question('Add meg az üzenetet: ', async (customMsg) => {
+        if (!customMsg) return console.log('[BOT] Nincs üzenet.');
+        try {
+          const guilds = client.guilds.cache;
+          let count = 0;
+          for (const [guildId] of guilds) {
+            const config = await readUser('guilds', guildId, guildId);
+            if (config && config.logChannel) {
+              try {
+                const channel = await client.channels.fetch(config.logChannel);
+                if (channel && channel.isTextBased()) {
+                  await channel.send(customMsg);
+                  count++;
+                }
+              } catch {}
+            }
+          }
+          console.log(`[BOT] Custom broadcast elküldve ${count} szerver log csatornájába.`);
+        } catch (e) {
+          console.error('[BOT] Custom broadcast hiba:', e);
+        }
+      });
+      return;
     } else {
       return console.log(t('unknown_broadcast_type'));
+
     }
     try {
       const guilds = client.guilds.cache;
@@ -216,6 +280,7 @@ rl.on('line', async (input) => {
     console.log(t('console_commands_help_users'));
     console.log(t('console_commands_help_eval'));
     console.log(t('console_commands_help_help'));
+
   } else if (cmd.startsWith('db ')) {
     const args = cmd.slice(3).trim().split(' ');
     const sub = args[0];

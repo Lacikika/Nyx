@@ -1,0 +1,10 @@
+{
+  "login": {
+    "title": "Webpanel Bejelentkezés",
+    "username": "Felhasználónév",
+    "password": "Jelszó",
+    "button": "Bejelentkezés",
+    "invalid": "Érvénytelen felhasználónév vagy jelszó.",
+    "rate_limit": "Túl sok bejelentkezési kísérlet erről az IP-címről, próbáld újra 15 perc múlva."
+  }
+}
