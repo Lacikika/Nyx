@@ -1,390 +1,43 @@
-<div style="margin-bottom:10px;">
-</div>
-<% if (success) { %>
-  <div class="notification success"><%= success %></div>
-<% } %>
-<% if (error) { %>
-  <div class="notification error"><%= error %></div>
-<% } %>
 <!DOCTYPE html>
 <html>
 <head>
   <title>Escrowed Data Web Panel</title>
   <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body.theme-dark {
-      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
-      color: #e2e8f0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      min-height: 100vh;
-    }
-    body.theme-light {
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-      color: #1e293b;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      min-height: 100vh;
-    }
-    
-    header.theme-dark {
-      background: rgba(15, 15, 35, 0.95);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(114, 137, 218, 0.2);
-      box-shadow: 0 4px 32px rgba(0, 0, 0, 0.3);
-      padding: 1.5rem 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    header.theme-light {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(67, 181, 129, 0.2);
-      box-shadow: 0 4px 32px rgba(0, 0, 0, 0.1);
-      padding: 1.5rem 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    
-    h1.theme-dark {
-      color: #e2e8f0;
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.025em;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #7c3aed, #3b82f6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    h1.theme-light {
-      color: #1e293b;
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.025em;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #059669, #0ea5e9);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .nav {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-    }
-    
-    .nav a.theme-dark {
-      color: #94a3b8;
-      background: rgba(30, 41, 59, 0.5);
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-      border: 1px solid rgba(148, 163, 184, 0.1);
-    }
-    .nav a.theme-light {
-      color: #64748b;
-      background: rgba(248, 250, 252, 0.8);
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-      border: 1px solid rgba(100, 116, 139, 0.1);
-    }
-    
-    .nav a.theme-dark:hover {
-      color: #e2e8f0;
-      background: rgba(124, 58, 237, 0.2);
-      border-color: rgba(124, 58, 237, 0.3);
-      transform: translateY(-1px);
-    }
-    .nav a.theme-light:hover {
-      color: #1e293b;
-      background: rgba(5, 150, 105, 0.1);
-      border-color: rgba(5, 150, 105, 0.2);
-      transform: translateY(-1px);
-    }
-    
-    .nav a.active {
-      font-weight: bolder;
-      background: linear-gradient(135deg, #7c3aed, #3b82f6) !important;
-      color: white !important;
-      border-color: transparent !important;
-    }
-    
-    .theme-toggle {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-    
-    .theme-toggle a.theme-dark {
-      color: #94a3b8;
-      background: rgba(30, 41, 59, 0.5);
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.375rem;
-      text-decoration: none;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-      border: 1px solid rgba(148, 163, 184, 0.1);
-    }
-    .theme-toggle a.theme-light {
-      color: #64748b;
-      background: rgba(248, 250, 252, 0.8);
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.375rem;
-      text-decoration: none;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-      border: 1px solid rgba(100, 116, 139, 0.1);
-    }
-    
-    .theme-toggle a.active {
-      background: linear-gradient(135deg, #7c3aed, #3b82f6) !important;
-      color: white !important;
-      border-color: transparent !important;
-    }
-    
-    .container {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-    
-    .container.theme-dark {
-      background: rgba(15, 15, 35, 0.6);
-      backdrop-filter: blur(20px);
-      border-radius: 1rem;
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-      padding: 2rem;
-    }
-    .container.theme-light {
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(20px);
-      border-radius: 1rem;
-      border: 1px solid rgba(100, 116, 139, 0.1);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-      padding: 2rem;
-    }
-    
-    .searchbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      align-items: center;
-      margin-bottom: 3rem;
-      padding: 1.5rem;
-      background: rgba(30, 41, 59, 0.3);
-      border-radius: 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.1);
-    }
-    
-    input.theme-dark {
-      background: rgba(15, 15, 35, 0.8);
-      color: #e2e8f0;
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 0.5rem;
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-      font-family: inherit;
-    }
-    input.theme-light {
-      background: rgba(248, 250, 252, 0.9);
-      color: #1e293b;
-      border: 1px solid rgba(100, 116, 139, 0.2);
-      border-radius: 0.5rem;
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-      font-family: inherit;
-    }
-    
-    input.theme-dark:focus {
-      outline: none;
-      border-color: #7c3aed;
-      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
-    }
-    input.theme-light:focus {
-      outline: none;
-      border-color: #059669;
-      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
-    }
-    
-    button.theme-dark {
-      background: linear-gradient(135deg, #7c3aed, #3b82f6);
-      color: white;
-      border: none;
-      border-radius: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      font-weight: 600;
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-family: inherit;
-    }
-    button.theme-light {
-      background: linear-gradient(135deg, #059669, #0ea5e9);
-      color: white;
-      border: none;
-      border-radius: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      font-weight: 600;
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-family: inherit;
-    }
-    
-    button.theme-dark:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
-    }
-    button.theme-light:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 25px rgba(5, 150, 105, 0.3);
-    }
-    
-    .section {
-      margin-bottom: 3rem;
-    }
-    
-    .section h2 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin-bottom: 1.5rem;
-      color: inherit;
-      letter-spacing: -0.025em;
-    }
-    
-    .section ul {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1rem;
-      list-style: none;
-    }
-    
-    .section li {
-      background: rgba(30, 41, 59, 0.3);
-      border-radius: 0.5rem;
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      transition: all 0.2s ease;
-    }
-    
-    .section li:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-      border-color: rgba(124, 58, 237, 0.3);
-    }
-    
-    .section li a {
-      display: block;
-      padding: 1rem 1.25rem;
-      color: inherit;
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-    }
-    
-    .section li a:hover {
-      color: #fff;
-    }
-    
-    .notification.theme-dark {
-      background: rgba(30, 41, 59, 0.8);
-      color: #10b981;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 0.5rem;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-    .notification.theme-light {
-      background: rgba(248, 250, 252, 0.9);
-      color: #059669;
-      border: 1px solid rgba(5, 150, 105, 0.3);
-      border-radius: 0.5rem;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-    
-    .notification.error {
-      color: #fff;
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      border-color: transparent;
-    }
-    .notification.success {
-      color: #fff;
-      background: linear-gradient(135deg, #10b981, #059669);
-      border-color: transparent;
-    }
-    
-    @media (max-width: 600px) {
-      .container { 
-        padding: 1rem; 
-        margin: 1rem;
-      }
-      .searchbar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .searchbar input,
-      .searchbar button {
-        width: 100%;
-      }
-      .section ul {
-        grid-template-columns: 1fr;
-      }
-      header.theme-dark,
-      header.theme-light {
-        padding: 1rem;
-      }
-      h1.theme-dark,
-      h1.theme-light {
-        font-size: 1.5rem;
-      }
-    }
+    body { font-family: 'Montserrat', Arial, sans-serif; background: #23272a; color: #eee; margin: 0; }
+    header { background: #2c2f33; padding: 1.5em 2em; box-shadow: 0 2px 8px #0004; }
+    h1 { color: #7289da; margin: 0; font-size: 2.2em; letter-spacing: 2px; }
+    .nav { margin: 1em 0 2em 0; }
+    .nav a { color: #43b581; margin-right: 1.5em; font-weight: bold; text-decoration: none; letter-spacing: 1px; }
+    .nav a:hover { text-decoration: underline; }
+    .container { max-width: 900px; margin: 2em auto; background: #2c2f33; border-radius: 12px; box-shadow: 0 4px 24px #0006; padding: 2em; }
+    .searchbar { margin-bottom: 2em; display: flex; gap: 0.5em; }
+    input[type="text"] { padding: 0.7em; border-radius: 6px; border: none; width: 300px; font-size: 1em; }
+    button { padding: 0.7em 1.5em; border-radius: 6px; border: none; background: #7289da; color: #fff; font-weight: bold; font-size: 1em; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #5865f2; }
+    .section { margin-bottom: 2.5em; }
+    h2 { color: #43b581; margin-bottom: 0.5em; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 0.3em 0; }
+    li a { color: #eee; background: #36393f; padding: 0.5em 1em; border-radius: 6px; display: inline-block; transition: background 0.2s, color 0.2s; }
+    li a:hover { background: #43b581; color: #23272a; }
+    @media (max-width: 600px) { .container { padding: 1em; } input[type="text"] { width: 100%; } }
   </style>
 </head>
 <body>
-  <body class="theme-<%= theme %>">
-  <header class="theme-<%= theme %>">
-    <h1 class="theme-<%= theme %>">Escrowed Data Web Panel</h1>
+  <header>
+    <h1>Escrowed Data Web Panel</h1>
     <div class="nav">
-      <a href="/" class="<%= (typeof page !== 'undefined' && page === 'index') ? 'active ' : '' %>theme-<%= theme %>">Főoldal</a>
-      <a href="/statistics" class="<%= (typeof page !== 'undefined' && page === 'statistics') ? 'active ' : '' %>theme-<%= theme %>">Statisztika</a>
-      <a href="/blank" class="<%= (typeof page !== 'undefined' && page === 'blank') ? 'active ' : '' %>theme-<%= theme %>">Blank Page</a>
-      <a href="/console" class="<%= (typeof page !== 'undefined' && page === 'console') ? 'active ' : '' %>theme-<%= theme %>">Console</a>
-    </div>
-    <div class="theme-toggle">
-      <a href="/theme/light" class="<%= theme === 'light' ? 'active ' : '' %>theme-light">☀️ Light</a>
-      <a href="/theme/dark" class="<%= theme === 'dark' ? 'active ' : '' %>theme-dark">🌙 Dark</a>
+      <a href="/">Főoldal</a>
+      <a href="/statistics">Statisztika</a>
+      <a href="/blank">Blank Page</a>
     </div>
   </header>
-  <div class="container theme-<%= theme %>">
+  <div class="container">
     <form class="searchbar" action="/search" method="get">
-      <input type="text" name="q" placeholder="Keresés név, ID, szerep..." class="theme-<%= theme %>" style="flex: 2; min-width: 200px;" />
-      <input type="date" name="date_from" class="theme-<%= theme %>" style="flex: 1; min-width: 140px;" />
-      <input type="date" name="date_to" class="theme-<%= theme %>" style="flex: 1; min-width: 140px;" />
-      <input type="text" name="role" placeholder="Szerep (role)" class="theme-<%= theme %>" style="flex: 1; min-width: 140px;" />
-      <button type="submit" class="theme-<%= theme %>">Keresés</button>
+      <input type="text" name="q" placeholder="Keresés fájlnév vagy ID alapján..." required />
+      <button type="submit">Keresés</button>
     </form>
-    
     <div class="section">
       <h2>Guild Logs</h2>
       <ul>
@@ -393,7 +46,6 @@
         <% }); %>
       </ul>
     </div>
-    
     <div class="section">
       <h2>User Profiles</h2>
       <ul>
@@ -402,12 +54,11 @@
         <% }); %>
       </ul>
     </div>
-    
     <div class="section">
       <h2>Guild Configs</h2>
       <ul>
         <% guilds.forEach(function(file) { %>
-          <li><a href="/guildconfig/<%= file %>"><%= file %> (edit)</a></li>
+          <li><a href="/data/guilds/<%= file %>"><%= file %></a></li>
         <% }); %>
       </ul>
     </div>

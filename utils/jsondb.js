@@ -2,6 +2,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
+const logger = require('./logger');
 
 // Load encryption key from .key file (hex, 32 bytes = 64 hex chars)
 const keyPath = path.join(__dirname, '../.key');
@@ -62,51 +63,86 @@ function getGuildLogFile(guildId) {
   return path.join(baseDir, 'logs', `${guildId}.json`);
 }
 
-
+/**
+ * Reads and decrypts a user-specific JSON file.
+ * @param {string} type - The type of data (e.g., 'profiles', 'logs').
+ * @param {string} userId - The user's ID.
+ * @param {string} guildId - The guild's ID.
+ * @returns {Promise<object>} The parsed JSON data, or an empty object if the file doesn't exist or is invalid.
+ */
 async function readUser(type, userId, guildId) {
+  const filePath = getUserFile(type, userId, guildId);
   try {
-    const buf = await fs.readFile(getUserFile(type, userId, guildId));
+    const buf = await fs.readFile(filePath);
     const data = decrypt(Buffer.isBuffer(buf) ? buf : Buffer.from(buf));
     return JSON.parse(data);
-  } catch {
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      logger.error(`[JSONDB] Error reading or parsing ${filePath}:`, error);
+    }
     return {};
   }
 }
 
+/**
+ * Encrypts and writes data to a user-specific JSON file.
+ * @param {string} type - The type of data (e.g., 'profiles', 'logs').
+ * @param {string} userId - The user's ID.
+ * @param {string} guildId - The guild's ID.
+ * @param {object} data - The data to write.
+ */
 async function writeUser(type, userId, guildId, data) {
   await ensureDir(path.join(baseDir, type));
   const enc = encrypt(JSON.stringify(data, null, 2));
   await fs.writeFile(getUserFile(type, userId, guildId), enc);
 }
 
-// Append a log entry to the guild's log file
-
+/**
+ * Appends a log entry to the guild's log file.
+ * @param {string} guildId - The guild's ID.
+ * @param {object} log - The log entry to append.
+ */
 async function appendGuildLog(guildId, log) {
   await ensureDir(path.join(baseDir, 'logs'));
+  const filePath = getGuildLogFile(guildId);
   let data = { entries: [] };
   try {
-    const buf = await fs.readFile(getGuildLogFile(guildId));
+    const buf = await fs.readFile(filePath);
     data = JSON.parse(decrypt(Buffer.isBuffer(buf) ? buf : Buffer.from(buf)));
-  } catch {}
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      logger.error(`[JSONDB] Error reading or parsing ${filePath}:`, error);
+    }
+  }
   data.entries.unshift(log);
   const enc = encrypt(JSON.stringify(data, null, 2));
-  await fs.writeFile(getGuildLogFile(guildId), enc);
+  await fs.writeFile(filePath, enc);
 }
 
-// Fetch all logs for a guild
-
+/**
+ * Fetches all logs for a guild.
+ * @param {string} guildId - The guild's ID.
+ * @returns {Promise<Array<object>>} An array of log entries.
+ */
 async function readGuildLogs(guildId) {
+  const filePath = getGuildLogFile(guildId);
   try {
-    const buf = await fs.readFile(getGuildLogFile(guildId));
+    const buf = await fs.readFile(filePath);
     const data = decrypt(Buffer.isBuffer(buf) ? buf : Buffer.from(buf));
     return JSON.parse(data).entries || [];
-  } catch {
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      logger.error(`[JSONDB] Error reading or parsing ${filePath}:`, error);
+    }
     return [];
   }
 }
 
-// Fetch all logs for a user across all guilds
-
+/**
+ * Fetches all logs for a user across all guilds.
+ * @param {string} userId - The user's ID.
+ * @returns {Promise<Array<object>>} An array of log entries.
+ */
 async function readGlobalUserLogs(userId) {
   const logsDir = path.join(baseDir, 'logs');
   let allLogs = [];
@@ -114,19 +150,33 @@ async function readGlobalUserLogs(userId) {
     const files = await fs.readdir(logsDir);
     for (const file of files) {
       const filePath = path.join(logsDir, file);
-      const stat = await fs.stat(filePath);
-      if (stat.isFile()) {
-        const buf = await fs.readFile(filePath);
-        const data = JSON.parse(decrypt(Buffer.isBuffer(buf) ? buf : Buffer.from(buf)));
-        if (Array.isArray(data.entries)) {
-          allLogs.push(...data.entries.filter(e => e.userId === userId));
+      try {
+        const stat = await fs.stat(filePath);
+        if (stat.isFile()) {
+          const buf = await fs.readFile(filePath);
+          const data = JSON.parse(decrypt(Buffer.isBuffer(buf) ? buf : Buffer.from(buf)));
+          if (Array.isArray(data.entries)) {
+            allLogs.push(...data.entries.filter(e => e.userId === userId));
+          }
+        }
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          logger.error(`[JSONDB] Error reading or parsing ${filePath}:`, error);
         }
       }
     }
-  } catch {}
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      logger.error(`[JSONDB] Error reading directory ${logsDir}:`, error);
+    }
+  }
   return allLogs;
 }
 
+/**
+ * Calculates the total size of the data directory.
+ * @returns {Promise<number>} The total size in bytes.
+ */
 async function getTotalDataSize() {
   async function getDirSize(dir) {
     let size = 0;
@@ -147,6 +197,9 @@ async function getTotalDataSize() {
   return await getDirSize(baseDir);
 }
 
+/**
+ * Enforces the data limit by removing the oldest log entries if the total data size exceeds the limit.
+ */
 async function enforceDataLimit() {
   const totalSize = await getTotalDataSize();
   if (totalSize < MAX_DATA_SIZE) return;
@@ -186,11 +239,23 @@ async function enforceDataLimit() {
   }
 }
 
+/**
+ * Gets the estimated interaction capacity based on the max data size.
+ * @returns {Promise<number>} The estimated number of interactions that can be stored.
+ */
 async function getInteractionCapacity() {
   return Math.floor(MAX_DATA_SIZE / INTERACTION_ESTIMATED_SIZE);
 }
 
-// Patch appendUserLog to also log to the guild log file
+/**
+ * Appends a log entry for a user and also logs to the guild log file.
+ * @param {string} type - The type of data.
+ * @param {string} userId - The user's ID.
+ * @param {string} guildId - The guild's ID.
+ * @param {object} log - The log entry.
+ * @param {string} [username=null] - The user's username.
+ * @param {object} [extra={}] - Extra data to add to the log entry.
+ */
 async function appendUserLog(type, userId, guildId, log, username = null, extra = {}) {
   await enforceDataLimit();
   const logs = await readUser(type, userId, guildId);

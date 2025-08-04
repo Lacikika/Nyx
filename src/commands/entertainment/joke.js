@@ -2,6 +2,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 const { EmbedBuilder } = require('discord.js');
+const t = require('../../../utils/locale');
 
 const jokes = [
   'Why did the scarecrow win an award? Because he was outstanding in his field!',
@@ -11,8 +12,8 @@ const jokes = [
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('vicc')
-    .setDescription('Veletlen vicc  '),
+    .setName('joke')
+    .setDescription(t('joke_description')),
   async execute(interaction) {
     const joke = jokes[Math.floor(Math.random() * jokes.length)];
     // Log joke command usage
@@ -27,7 +28,7 @@ module.exports = {
     }, interaction.user.username);
 
     const embed = new EmbedBuilder()
-      .setTitle('📝 Vicc')
+      .setTitle(t('joke_embed_title'))
       .setDescription(joke)
       .setColor('Random')
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/616/616489.png')
