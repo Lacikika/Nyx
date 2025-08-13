@@ -142,8 +142,10 @@ function requireDiscordLogin(req, res, next) {
 app.use(express.urlencoded({ extended: true }));
 // Middleware: require login
 function requireLogin(req, res, next) {
-  if (!req.session.user) return res.redirect('/login');
-  next();
+  if (req.session.user || req.user) {
+    return next();
+  }
+  return res.redirect('/login');
 }
 // Webpanel user DB helpers
 const WEBPANEL_USER_TYPE = 'webpanel_users';

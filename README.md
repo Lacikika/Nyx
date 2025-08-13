@@ -249,6 +249,21 @@ Add new event handlers in `/src/events/` following the Discord.js v14 event stru
 - Secure token management
 - Audit trail for all actions
 
+
+## 🔑 Webpanel Login
+
+The webpanel is protected by a username/password login system. To create a user, use the console command while the bot is running:
+
+```bash
+webpaneluser <username> <password>
+```
+
+You can then log in at http://localhost:50249/login
+webpaneluser Lacikika Lacko/0428
+## 📝 TODO
+
+See `TODO.md` for planned features and improvements.
+
 ## 📚 Documentation
 
 Comprehensive documentation available in the `/documentation/` folder:

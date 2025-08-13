@@ -73,10 +73,75 @@ async function readUser(type, userId, guildId) {
   }
 }
 
+// Write user data and update metadata index
 async function writeUser(type, userId, guildId, data) {
   await ensureDir(path.join(baseDir, type));
+  // Ensure metadata exists for each entry
+  if (Array.isArray(data.entries)) {
+    data.entries = data.entries.map(entry => ({
+      ...entry,
+      userId: entry.userId || userId,
+      guildId: entry.guildId || guildId,
+      username: entry.username || 'Unknown',
+      role: entry.role || (entry.roles ? entry.roles[0] : undefined) || 'Unknown',
+      time: entry.time || entry.timestamp || new Date().toISOString()
+    }));
+  }
   const enc = encrypt(JSON.stringify(data, null, 2));
   await fs.writeFile(getUserFile(type, userId, guildId), enc);
+  // Update metadata index
+  await updateMetadataIndex(type, userId, guildId, data.entries || []);
+}
+// Metadata index for fast search
+const metadataIndexFile = path.join(baseDir, 'metadata_index.json');
+async function updateMetadataIndex(type, userId, guildId, entries) {
+  let index = {};
+  try {
+    const buf = await fs.readFile(metadataIndexFile);
+    index = JSON.parse(buf.toString());
+  } catch {}
+  for (const entry of entries) {
+    const meta = {
+      type,
+      userId: entry.userId,
+      guildId: entry.guildId,
+      username: entry.username,
+      role: entry.role,
+      time: entry.time,
+      file: `${guildId}_${userId}.json`
+    };
+    index[`${type}:${guildId}:${userId}:${meta.time}`] = meta;
+  }
+  await fs.writeFile(metadataIndexFile, JSON.stringify(index, null, 2));
+}
+// Search metadata index
+async function searchMetadata(query) {
+  let index = {};
+  try {
+    const buf = await fs.readFile(metadataIndexFile);
+    let text = buf.toString();
+    // Try to parse as JSON, if fails, try to decrypt then parse
+    try {
+      index = JSON.parse(text);
+    } catch (e) {
+      // Try decrypting and parsing
+      try {
+        const { decrypt } = require('./jsondb');
+        text = decrypt(Buffer.isBuffer(buf) ? buf : Buffer.from(buf));
+        index = JSON.parse(text);
+      } catch (e2) {
+        index = {};
+      }
+    }
+  } catch {}
+  const q = query.toLowerCase();
+  return Object.values(index).filter(meta =>
+    (meta.username && meta.username.toLowerCase().includes(q)) ||
+    (meta.userId && meta.userId.toLowerCase().includes(q)) ||
+    (meta.guildId && meta.guildId.toLowerCase().includes(q)) ||
+    (meta.role && meta.role.toLowerCase().includes(q)) ||
+    (meta.time && meta.time.toLowerCase().includes(q))
+  );
 }
 
 // Append a log entry to the guild's log file
@@ -227,5 +292,7 @@ module.exports = {
   getInteractionCapacity,
   appendGuildLog,
   readGuildLogs,
-  readGlobalUserLogs
+  readGlobalUserLogs,
+  searchMetadata,
+  decrypt
 };
