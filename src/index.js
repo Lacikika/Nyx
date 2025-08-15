@@ -2,7 +2,7 @@
 const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require('discord.js');
 const config = require('./config');
 const fs = require('fs');
-const { readUser, writeUser, appendUserLog, appendGuildLog } = require('../utils/jsondb');
+const { readUser, writeUser, appendLog } = require('../utils/mysql');
 const logger = require('../utils/logger');
 
 
@@ -91,7 +91,9 @@ client.once('ready', async () => {
       let logChannelId = config.logChannelId;
       try {
         const guildConfig = await readUser('guilds', guildId, guildId);
-        if (guildConfig && guildConfig.logChannel) logChannelId = guildConfig.logChannel;
+        if (guildConfig && guildConfig.config && guildConfig.config.logChannel) {
+          logChannelId = guildConfig.config.logChannel;
+        }
       } catch {}
       if (logChannelId) {
         try {
@@ -201,10 +203,10 @@ rl.on('line', async (input) => {
           const guilds = client.guilds.cache;
           let count = 0;
           for (const [guildId] of guilds) {
-            const config = await readUser('guilds', guildId, guildId);
-            if (config && config.logChannel) {
+            const guildConfig = await readUser('guilds', guildId, guildId);
+            if (guildConfig && guildConfig.config && guildConfig.config.logChannel) {
               try {
-                const channel = await client.channels.fetch(config.logChannel);
+                const channel = await client.channels.fetch(guildConfig.config.logChannel);
                 if (channel && channel.isTextBased()) {
                   await channel.send(customMsg);
                   count++;
@@ -225,10 +227,10 @@ rl.on('line', async (input) => {
       const guilds = client.guilds.cache;
       let count = 0;
       for (const [guildId] of guilds) {
-        const config = await readUser('guilds', guildId, guildId);
-        if (config && config.logChannel) {
+        const guildConfig = await readUser('guilds', guildId, guildId);
+        if (guildConfig && guildConfig.config && guildConfig.config.logChannel) {
           try {
-            const channel = await client.channels.fetch(config.logChannel);
+            const channel = await client.channels.fetch(guildConfig.config.logChannel);
             if (channel && channel.isTextBased()) {
               await channel.send(message);
               count++;
@@ -285,88 +287,10 @@ rl.on('line', async (input) => {
     console.log('  users <guildId>        - Felhasználók listázása egy szerveren');
     console.log('  eval <js>              - JavaScript kód futtatása (veszélyes!)');
     console.log('  help                   - Ez a lista');
-  } else if (cmd.startsWith('db ')) {
-    const args = cmd.slice(3).trim().split(' ');
-    const sub = args[0];
-    const type = args[1];
-    const guildId = args[2];
-    const userId = args[3];
-    const json = args.slice(4).join(' ');
-    const baseDir = require('path').join(__dirname, '../data');
-    const fsPromises = require('fs').promises;
-    if (sub === 'list') {
-      // db list <type>
-      if (!type) return console.log('Használat: db list <type>');
-      try {
-        const files = await fsPromises.readdir(require('path').join(baseDir, type));
-        console.log(`[DB] ${type} fájlok:`, files);
-      } catch (e) {
-        console.error('[DB] Nem sikerült listázni:', e);
-      }
-    } else if (sub === 'get') {
-      // db get <type> <guildId> <userId>
-      if (!type || !guildId || !userId) return console.log('Használat: db get <type> <guildId> <userId>');
-      try {
-        const data = await readUser(type, userId, guildId);
-        console.dir(data, { depth: 5 });
-      } catch (e) {
-        console.error('[DB] Nem sikerült lekérni:', e);
-      }
-    } else if (sub === 'set') {
-      // db set <type> <guildId> <userId> <json>
-      if (!type || !guildId || !userId || !json) return console.log('Használat: db set <type> <guildId> <userId> <json>');
-      try {
-        const obj = JSON.parse(json);
-        await writeUser(type, userId, guildId, obj);
-        console.log('[DB] Sikeres mentés.');
-      } catch (e) {
-        console.error('[DB] Nem sikerült menteni:', e);
-      }
-    } else if (sub === 'delete') {
-      // db delete <type> <guildId> <userId>
-      if (!type || !guildId || !userId) return console.log('Használat: db delete <type> <guildId> <userId>');
-      try {
-        const file = require('path').join(baseDir, type, `${guildId}_${userId}.json`);
-        await fsPromises.unlink(file);
-        console.log('[DB] Fájl törölve.');
-      } catch (e) {
-        console.error('[DB] Nem sikerült törölni:', e);
-      }
-    } else if (sub === 'raw') {
-      // db raw <type> <guildId> <userId>
-      if (!type || !guildId || !userId) return console.log('Használat: db raw <type> <guildId> <userId>');
-      try {
-        const file = require('path').join(baseDir, type, `${guildId}_${userId}.json`);
-        const raw = await fsPromises.readFile(file, 'utf8');
-        console.log(raw);
-      } catch (e) {
-        console.error('[DB] Nem sikerült olvasni:', e);
-      }
-    } else if (sub === 'help') {
-      console.log('[BOT] DB parancsok:');
-      console.log('  db list <type>                  - Fájlok listázása (pl. profiles, guilds, logs)');
-      console.log('  db get <type> <guildId> <userId>    - Adat lekérdezése (objektum)');
-      console.log('  db set <type> <guildId> <userId> <json> - Adat beállítása (JSON string)');
-      console.log('  db delete <type> <guildId> <userId>     - Fájl törlése');
-      console.log('  db raw <type> <guildId> <userId>       - Fájl tartalom (nyers JSON)');
-      console.log('  db help                               - Ez a lista');
-    } else {
-      console.log('[BOT] Ismeretlen db parancs. Írd be: db help');
-    }
   } else {
     console.log('[BOT] Ismeretlen parancs:', cmd);
   }
 });
-
-// Escrow all existing data files on startup (one-time migration)
-try {
-  const { escrowDir } = require('../webpanel/escrow_existing');
-  const dataDir = require('path').join(__dirname, '../data');
-  escrowDir(dataDir);
-  logger.info('[ESCROW] All existing data files escrowed (encrypted)');
-} catch (e) {
-  logger.warn('[ESCROW] Could not escrow existing data:', e.message);
-}
 
 // Start the webpanel if enabled (default: always enabled)
 try {

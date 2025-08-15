@@ -1,7 +1,7 @@
 // commands/utility/rank.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getRank, xpForLevel } = require('../../../utils/rank');
-const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
+const { appendLog } = require('../../../utils/mysql');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,15 +26,13 @@ ${level === 0 ? '⚓ Kezdd el az utad a chatben, hogy szintet lépj!' : '⛵ Tar
       .setFooter({ text: '🏴‍☠️ Aktívabb chat = magasabb szint! | Nyx RP Bot', iconURL: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' })
       .setTimestamp();
     // Log rank command usage
-    await appendUserLog('logs', interaction.user.id, interaction.guild.id, {
-      event_type: 'RANK',
-      reason: 'Viewed rank',
-      warned_by: interaction.user.id,
-      channel_id: interaction.channel.id,
-      message_id: interaction.id,
-      message_content: null,
-      date: Date.now()
-    }, interaction.user.username);
+    await appendLog({
+        guildId: interaction.guild.id,
+        userId: interaction.user.id,
+        type: 'RANK',
+        moderatorId: interaction.user.id,
+        reason: `Rank checked for ${user.tag}`,
+    });
     await interaction.reply({ embeds: [embed], ephemeral: true });
   },
 };

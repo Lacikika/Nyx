@@ -23,4 +23,10 @@
 
 ---
 
+## Migrations
+- [✅] Migrate data storage from JSON files to MySQL database.
+- [✅] Create a new `utils/mysql.js` module for database interactions.
+- [✅] Refactor all commands, events, and webpanel to use the new MySQL module.
+- [✅] Create a `schema.sql` file to define the database structure.
+
 **Contributions and suggestions are welcome!**

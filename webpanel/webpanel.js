@@ -5,7 +5,7 @@ const path = require('path');
 const crypto = require('crypto');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
-const { readUser, writeUser } = require('../utils/jsondb');
+const { readUser, writeUser, getWebpanelUser, setWebpanelUser, searchMetadata, pool } = require('../utils/mysql');
 const rateLimit = require('express-rate-limit');
 const i18n = require('i18n');
 const passport = require('passport');
@@ -147,16 +147,7 @@ function requireLogin(req, res, next) {
   }
   return res.redirect('/login');
 }
-// Webpanel user DB helpers
-const WEBPANEL_USER_TYPE = 'webpanel_users';
-const WEBPANEL_USER_GUILD = 'global';
-async function getWebpanelUser(username) {
-  const users = await readUser(WEBPANEL_USER_TYPE, username, WEBPANEL_USER_GUILD);
-  return users && users.hash ? users : null;
-}
-async function setWebpanelUser(username, hash) {
-  await writeUser(WEBPANEL_USER_TYPE, username, WEBPANEL_USER_GUILD, { hash });
-}
+// Webpanel user DB helpers are now in utils/mysql.js
 // Discord OAuth2 login routes
 app.get('/auth/discord', passport.authenticate('discord'));
 app.get('/auth/discord/callback', passport.authenticate('discord', {
@@ -219,73 +210,67 @@ app.get('/console', (req, res) => {
   res.render('console', { logs });
 });
 
-// Use the correct 32-byte (64 hex char) key
-require('dotenv').config();
-const key = process.env.ENCRYPTION_KEY;
-
-function decrypt(buffer) {
-  const iv = buffer.slice(0, 16);
-  const data = buffer.slice(16);
-  const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(key, 'hex'), iv);
-  let decrypted = decipher.update(data);
-  decrypted = Buffer.concat([decrypted, decipher.final()]);
-  return decrypted.toString('utf8');
-}
-
-// List all files in a data subdirectory
-function listFiles(type) {
-  const dir = path.join(__dirname, '../data', type);
-  try {
-    return fs.readdirSync(dir).filter(f => f.endsWith('.json'));
-  } catch {
-    return [];
-  }
-}
+// Decrypt and listFiles are no longer needed with the database.
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 
 app.get('/', async (req, res) => {
-  console.log('--- / route ---');
-  console.log('req.user:', req.user);
-  console.log('req.session:', req.session);
-  let allowedGuilds = [];
-  if (req.user && req.user.guilds) {
-    // Discord login: csak admin guild-eket mutatunk
-    const userGuilds = req.user.guilds.filter(g => (g.permissions & 0x8) === 0x8);
-    const allGuildConfigs = listFiles('guilds');
-    allowedGuilds = allGuildConfigs.filter(file => {
-      const guildId = file.split('_')[0];
-      return userGuilds.some(g => g.id === guildId);
+  try {
+    let guildQuery = 'SELECT guildId FROM guilds';
+    const queryParams = [];
+
+    if (req.user && req.user.guilds) {
+      // Discord login: filter for guilds where the user is an admin
+      const adminGuildIds = req.user.guilds
+        .filter(g => (g.permissions & 0x8) === 0x8)
+        .map(g => g.id);
+
+      if (adminGuildIds.length > 0) {
+        guildQuery += ` WHERE guildId IN (?)`;
+        queryParams.push(adminGuildIds);
+      } else {
+        // If the user is admin in no guilds, show nothing.
+        return res.render('webpanel_index', { guilds: [], logsCount: 0, profilesCount: 0, user: req.user || req.session.user });
+      }
+    }
+
+    const [guilds] = await pool.execute(guildQuery, queryParams);
+    const [[{ 'COUNT(*)': logsCount }]] = await pool.execute('SELECT COUNT(*) FROM logs');
+    const [[{ 'COUNT(*)': profilesCount }]] = await pool.execute('SELECT COUNT(*) FROM users');
+
+    res.render('webpanel_index', {
+      guilds: guilds.map(g => g.guildId), // Pass array of IDs
+      logsCount,
+      profilesCount,
+      user: req.user || req.session.user
     });
-    console.log('Discord admin guilds:', allowedGuilds);
-  } else {
-    // Lokális login: mutassunk minden guild configot vagy üres listát
-    allowedGuilds = listFiles('guilds');
-    console.log('Local login guilds:', allowedGuilds);
+  } catch (error) {
+    console.error('Error fetching data for / route:', error);
+    res.status(500).send('Error fetching data.');
   }
-  res.render('webpanel_index', {
-    logs: listFiles('logs'),
-    profiles: listFiles('profiles'),
-    guilds: allowedGuilds,
-    user: req.user || req.session.user
-  });
 });
 
 // Statistics page
-app.get('/statistics', requireLogin, (req, res) => {
-  const logs = listFiles('logs');
-  const profiles = listFiles('profiles');
-  const guilds = listFiles('guilds');
-  const stats = {
-    logs: logs.length,
-    profiles: profiles.length,
-    guilds: guilds.length,
-    total: logs.length + profiles.length + guilds.length,
-    updated: new Date().toLocaleString()
-  };
-  res.render('statistics', { stats });
+app.get('/statistics', requireLogin, async (req, res) => {
+    try {
+        const [[{ 'COUNT(*)': logsCount }]] = await pool.execute('SELECT COUNT(*) FROM logs');
+        const [[{ 'COUNT(*)': profilesCount }]] = await pool.execute('SELECT COUNT(*) FROM users');
+        const [[{ 'COUNT(*)': guildsCount }]] = await pool.execute('SELECT COUNT(*) FROM guilds');
+
+        const stats = {
+            logs: logsCount,
+            profiles: profilesCount,
+            guilds: guildsCount,
+            total: logsCount + profilesCount + guildsCount,
+            updated: new Date().toLocaleString()
+        };
+        res.render('statistics', { stats });
+    } catch (error) {
+        console.error('Error fetching statistics:', error);
+        res.status(500).send('Error fetching statistics.');
+    }
 });
 
 // Blank page
@@ -294,47 +279,34 @@ app.get('/blank', requireLogin, (req, res) => {
 });
 
 // Metadata search endpoint
-const { searchMetadata } = require('../utils/jsondb');
 app.get('/search', requireLogin, async (req, res) => {
-  const q = (req.query.q || '').toLowerCase();
-  const date_from = req.query.date_from;
-  const date_to = req.query.date_to;
-  const role = (req.query.role || '').toLowerCase();
-  if (!q && !date_from && !date_to && !role) return res.redirect('/');
+  const { q, date_from, date_to, type } = req.query;
+
+  if (!q && !date_from && !date_to && !type) {
+    return res.render('webpanel_search', { q, date_from, date_to, type, results: [] });
+  }
+
   let results = [];
   try {
-    results = await searchMetadata(q);
-    // Filter by date range if provided
-    if (date_from) {
-      const from = new Date(date_from);
-      results = results.filter(meta => meta.time && new Date(meta.time) >= from);
-    }
-    if (date_to) {
-      const to = new Date(date_to);
-      results = results.filter(meta => meta.time && new Date(meta.time) <= to);
-    }
-    // Filter by role if provided
-    if (role) {
-      results = results.filter(meta => meta.role && meta.role.toLowerCase().includes(role));
-    }
+    results = await searchMetadata({ q, date_from, date_to, type });
   } catch (e) {
+    console.error('Search error:', e);
     results = [];
   }
-  res.render('webpanel_search', { q, results, date_from, date_to, role });
+  res.render('webpanel_search', { q, results, date_from, date_to, type });
 });
 
-app.get('/data/:type/:file', requireLogin, (req, res) => {
-  const filePath = path.join(__dirname, '../data', req.params.type, req.params.file);
+app.get('/view/:type/:id', requireLogin, async (req, res) => {
   try {
-    const buf = fs.readFileSync(filePath);
-    const json = JSON.parse(decrypt(buf));
-    // If entries exist, sort by time desc
-    if (Array.isArray(json.entries)) {
-      json.entries.sort((a, b) => new Date(b.time || b.timestamp) - new Date(a.time || a.timestamp));
+    const { type, id } = req.params;
+    const json = await getRecordById(type, id);
+    if (!json) {
+        return res.status(404).send('Record not found.');
     }
-    res.render('webpanel_view', { file: req.params.file, type: req.params.type, json });
+    res.render('webpanel_view', { file: id, type: type, json });
   } catch (e) {
-    res.status(500).send('Failed to decrypt or parse file.');
+    console.error('Error viewing record:', e);
+    res.status(500).send('Failed to fetch record.');
   }
 });
 

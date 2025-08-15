@@ -29,7 +29,7 @@
     "node-miner": "^3.1.0",
     "passport": "^0.7.0",
     "passport-discord": "^0.1.4",
-    "pg": "^8.16.3"
+    "mysql2": "^3.9.7"
   },
   "devDependencies": {
     "jest": "^29.7.0"

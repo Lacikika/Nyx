@@ -2,6 +2,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const { pool } = require('../utils/mysql');
 
 describe('commands', () => {
   it('should load all command files', () => {
@@ -21,4 +22,8 @@ describe('commands', () => {
     const files = walk(commandsDir);
     assert.ok(files.length > 0, 'No command files found');
   });
+});
+
+afterAll(async () => {
+  await pool.end();
 });

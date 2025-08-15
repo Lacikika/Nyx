@@ -1,18 +1,17 @@
 const { Events } = require('discord.js');
-const { appendUserLog } = require('../../utils/jsondb');
+const { appendLog } = require('../../utils/mysql');
 const logger = require('../../utils/logger');
 
 module.exports = {
   name: Events.GuildMemberRemove,
   async execute(member) {
-    const log = {
-      event_type: 'MEMBER_LEAVE',
-      userId: member.id,
+    const logData = {
       guildId: member.guild.id,
-      username: member.user?.username,
-      date: Date.now()
+      userId: member.id,
+      type: 'MEMBER_LEAVE',
+      reason: `${member.user.tag} left the server.`,
     };
-    await appendUserLog('logs', member.id, member.guild.id, log, member.user?.username);
-    logger.event('MEMBER LEAVE', log);
+    await appendLog(logData);
+    logger.event('MEMBER LEAVE', logData);
   }
 };

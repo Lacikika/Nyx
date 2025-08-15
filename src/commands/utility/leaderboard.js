@@ -1,7 +1,7 @@
 // commands/utility/leaderboard.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getLeaderboard } = require('../../../utils/rank');
-const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
+const { appendLog } = require('../../../utils/mysql');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -9,7 +9,7 @@ module.exports = {
     .setDescription('🏴‍☠️ Show the XP leaderboard for this server'),
   async execute(interaction) {
     const top = await getLeaderboard(interaction.guild.id, 10);
-    let desc = top.map((u, i) => `**${i+1}. <@${u.user_id}>** — Szint ${u.level} (${u.xp} XP)`).join('\n');
+    let desc = top.map((u, i) => `**${i+1}. <@${u.userId}>** — Szint ${u.level} (${u.xp} XP)`).join('\n');
     if (!desc) desc = 'Még nincs felhasználó XP-vel!';
     const embed = new EmbedBuilder()
       .setTitle('🏴‍☠️🏆 Szerver ranglista')
@@ -22,15 +22,13 @@ module.exports = {
       .setFooter({ text: '🏴‍☠️ Csevegj sokat, hogy feljebb kerülj a ranglistán!' })
       .setTimestamp();
     // Log leaderboard command usage
-    await appendUserLog('logs', interaction.user.id, interaction.guild.id, {
-      event_type: 'LEADERBOARD',
-      reason: 'Viewed leaderboard',
-      warned_by: interaction.user.id,
-      channel_id: interaction.channel.id,
-      message_id: interaction.id,
-      message_content: null,
-      date: Date.now()
-    }, interaction.user.username);
+    await appendLog({
+        guildId: interaction.guild.id,
+        userId: interaction.user.id,
+        type: 'LEADERBOARD',
+        moderatorId: interaction.user.id,
+        reason: `Leaderboard viewed by ${interaction.user.tag}`,
+    });
     await interaction.reply({ embeds: [embed], ephemeral: true });
   },
 };

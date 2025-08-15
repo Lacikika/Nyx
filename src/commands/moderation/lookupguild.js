@@ -1,6 +1,6 @@
 // Utility: lookupguild.js
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { readGuildLogs } = require('../../../utils/jsondb.js');
+const { readGuildLogs, readUser } = require('../../../utils/mysql.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -8,18 +8,23 @@ module.exports = {
     .setDescription('Szerver informaciok lekerdezese  '),
   async execute(interaction) {
     const guildId = interaction.guild.id;
+
+    // Check permissions
+    const member = await interaction.guild.members.fetch(interaction.user.id);
+    const guildConfig = await readUser('guilds', guildId, guildId);
+    const staffRoles = guildConfig?.config?.staffRoles || [];
+    const hasStaffRole = member.roles.cache.some(role => staffRoles.includes(role.id));
+    const hasAdmin = member.permissions.has('Administrator');
+
+    if (!hasAdmin && !hasStaffRole) {
+      return interaction.reply({ content: 'Nincs jogosultságod ehhez a parancshoz.', ephemeral: true });
+    }
+
     const logs = await readGuildLogs(guildId);
     if (!logs.length) {
       return interaction.reply({ content: 'Nincsenek naplók ehhez a szerverhez.', ephemeral: true });
     }
-    // Check if user has Administrator permission or a staff role
-    const member = await interaction.guild.members.fetch(interaction.user.id);
-    const hasAdmin = member.permissions.has('Administrator');
-    const staffRoleIds = ['STAFF_ROLE_ID_1', 'STAFF_ROLE_ID_2']; // Replace with actual staff role IDs
-    const hasStaffRole = member.roles.cache.some(role => staffRoleIds.includes(role.id));
-    if (!hasAdmin && !hasStaffRole) {
-      return interaction.reply({ content: 'Nincs jogosultságod ehhez a parancshoz.', ephemeral: true });
-    }
+
     let page = 0;
     const pageSize = 5;
     const getPageEmbed = (page) => {
@@ -33,8 +38,8 @@ module.exports = {
       const slice = logs.slice(page * pageSize, (page + 1) * pageSize);
       slice.forEach((log, i) => {
         embed.addFields({
-          name: `• ${log.event_type || log.action || 'Ismeretlen'} — ${log.reason || log.message_content || 'Nincs megadva ok'}`,
-          value: `Felhasználó: ${log.username || log.userId || 'Ismeretlen'} | Csatorna: <#${log.channel_id || 'N/A'}>\nIdőpont: ${log.timestamp || log.date || 'Ismeretlen'}`,
+          name: `• ${log.type || 'Ismeretlen'} — ${log.reason || 'Nincs megadva ok'}`,
+          value: `Felhasználó: <@${log.userId || 'Ismeretlen'}> | Moderátor: <@${log.moderatorId}>\nIdőpont: ${new Date(log.timestamp).toLocaleString()}`,
           inline: false
         });
       });

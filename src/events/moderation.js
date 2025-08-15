@@ -1,7 +1,7 @@
 // Discord.js v14 moderation event handler for messageCreate
 // Features: bad word filter, spam protection, per-guild config, logging
 const { Events, PermissionFlagsBits } = require('discord.js');
-const { readUser } = require('../../utils/jsondb');
+const { readUser, appendLog } = require('../../utils/mysql');
 const logger = require('../../utils/logger');
 
 // In-memory spam tracker: { [guildId_userId]: [timestamps] }
@@ -16,26 +16,29 @@ module.exports = {
     const userId = message.author.id;
     let didModerate = false;
 
-    // Load guild config (from DB or file)
-    let config;
+    // Load guild config
+    let guildData;
     try {
-      config = await readUser('guilds', guildId, guildId);
+      guildData = await readUser('guilds', guildId, guildId);
     } catch (e) {
       logger.error('MODERATION: Failed to load guild config', e);
       return;
     }
-    if (!config) return;
+    const config = guildData?.config || {};
     const { logChannel, spamLimit = 5, timeWindow = 7000 } = config;
-    const logChannelId = config.logChannelId || logChannel; // fallback for legacy
+    const logChannelId = config.logChannelId || logChannel;
 
     // --- Bad word filter (from JSON file, secure) ---
+    // TODO: Move badwords to guild config in the database
     let badWords = [];
     try {
       const fs = require('fs');
       const path = require('path');
       const badwordsPath = path.join(__dirname, '../../data/badwords.json');
-      if (!badwordsPath.startsWith(path.join(__dirname, '../../data'))) throw new Error('Badwords path traversal detected!');
-      badWords = JSON.parse(fs.readFileSync(badwordsPath, 'utf8'));
+      if (fs.existsSync(badwordsPath)) {
+        if (!badwordsPath.startsWith(path.join(__dirname, '../../data'))) throw new Error('Badwords path traversal detected!');
+        badWords = JSON.parse(fs.readFileSync(badwordsPath, 'utf8'));
+      }
     } catch (e) {
       logger.error('MODERATION: Failed to load badwords.json', e);
     }
@@ -72,7 +75,7 @@ module.exports = {
           }
         }
         logger.event('BAD_WORD', { guildId, userId, word: found, content: message.content }, { audit: true });
-        await require('../../utils/jsondb').appendUserLog('logs', userId, guildId, { event_type: 'BAD_WORD', word: found, content: message.content, date: Date.now() }, message.author.username);
+        await appendLog({ guildId, userId, type: 'BAD_WORD', reason: `Word: ${found}`, log_data: { content: message.content } });
         return;
       }
     }
@@ -101,13 +104,15 @@ module.exports = {
         } catch {}
       }
       logger.event('SPAM', { guildId, userId, count: arr.length, window: timeWindow }, { audit: true });
-      await require('../../utils/jsondb').appendUserLog('logs', userId, guildId, { event_type: 'SPAM', count: arr.length, window: timeWindow, date: Date.now() }, message.author.username);
+      await appendLog({ guildId, userId, type: 'SPAM', reason: `${arr.length} messages in ${timeWindow / 1000}s` });
       return;
     }
     // If not moderated, log normal message
     if (!didModerate) {
       logger.debug('MESSAGE_OK', { guildId, userId, content: message.content });
-      await require('../../utils/jsondb').appendUserLog('logs', userId, guildId, { event_type: 'MESSAGE_OK', content: message.content, date: Date.now() }, message.author.username);
+      // We probably don't want to log every single message to the database.
+      // This will be very noisy. I'm commenting this out.
+      // await appendLog({ guildId, userId, type: 'MESSAGE', reason: message.content });
     }
   }
 };

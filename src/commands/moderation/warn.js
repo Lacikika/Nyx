@@ -1,6 +1,6 @@
 // Warn command
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { readUser, writeUser } = require('../../../utils/jsondb');
+const { readUser, writeUser, appendLog } = require('../../../utils/mysql');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -21,30 +21,34 @@ module.exports = {
     const user = interaction.options.getUser('target');
     const reason = interaction.options.getString('reason') || 'Nincs megadva indok';
     const guildId = interaction.guild.id;
-    // Log warning to user log file
-    const logEntry = {
-      event_type: 'WARN',
-      reason,
-      warned_by: interaction.user.id,
-      channel_id: interaction.channel.id,
-      message_id: interaction.id,
-      message_content: reason,
-      date: Date.now()
-    };
-    // Append to user log
-    const { appendUserLog } = require('../../../utils/jsondb');
-    await appendUserLog('logs', user.id, guildId, logEntry, user.username);
-    // Update user profile stats
-    const profile = await readUser('profiles', user.id, guildId);
-    profile.total_warns = (profile.total_warns || 0) + 1;
-    profile.last_seen = Date.now();
+
+    // Log the warning
+    await appendLog({
+      guildId: guildId,
+      userId: user.id,
+      type: 'WARN',
+      moderatorId: interaction.user.id,
+      reason: reason,
+    });
+
+    // Update user profile with the new warning
+    let profile = await readUser('profiles', user.id, guildId);
+    if (!profile) {
+      profile = { userId: user.id, guildId: guildId, xp: 0, level: 0, warnings: [] };
+    }
+    if (!profile.warnings) {
+        profile.warnings = [];
+    }
+    profile.warnings.push({ reason: reason, by: interaction.user.id, date: new Date().toISOString() });
+
     await writeUser('profiles', user.id, guildId, profile);
+
     const embed = new EmbedBuilder()
       .setTitle('Felhasználó figyelmeztetve')
       .setDescription(`${user.tag} figyelmeztetést kapott.`)
       .addFields({ name: 'Indok', value: reason })
       .setColor('Orange')
-      .setFooter({ text: '⛏️ by Laci 🛠️' });
+      .setFooter({ text: `Figyelmeztetések száma: ${profile.warnings.length}` });
     await interaction.reply({ embeds: [embed] });
   },
 };

@@ -1,6 +1,6 @@
 // Utility: lookupuser.js
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { readGlobalUserLogs } = require('../../../utils/jsondb.js');
+const { readGlobalUserLogs } = require('../../../utils/mysql.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -27,8 +27,8 @@ module.exports = {
       const slice = logs.slice(page * pageSize, (page + 1) * pageSize);
       slice.forEach((log, i) => {
         embed.addFields({
-          name: `• ${log.event_type || log.action || 'Ismeretlen'} — ${log.reason || log.message_content || 'Nincs megadva ok'}`,
-          value: `Szerver: ${log.guildId || 'Ismeretlen'} | Csatorna: <#${log.channel_id || 'N/A'}>\nIdőpont: ${log.timestamp || log.date || 'Ismeretlen'}`,
+          name: `• ${log.type || 'Ismeretlen'} — ${log.reason || 'Nincs megadva ok'}`,
+          value: `Szerver: ${log.guildId || 'Ismeretlen'} | Moderátor: <@${log.moderatorId}>\nIdőpont: ${new Date(log.timestamp).toLocaleString()}`,
           inline: false
         });
       });

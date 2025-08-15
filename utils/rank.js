@@ -1,5 +1,5 @@
 // utils/rank.js
-const { readUser, writeUser } = require('./jsondb');
+const { readUser, writeUser, pool } = require('./mysql');
 
 function xpForLevel(level) {
   return 5 * level * level + 50 * level + 100;
@@ -7,7 +7,14 @@ function xpForLevel(level) {
 
 async function addXp(userId, guildId, amount, client) {
   let profile = await readUser('profiles', userId, guildId);
-  let xp = profile.xp || 0, level = profile.level || 0;
+  if (!profile) {
+    profile = { userId, guildId, xp: 0, level: 0, warnings: [] };
+  }
+
+  let xp = profile.xp || 0;
+  let level = profile.level || 0;
+
+  // Bonus calculation can stay the same as it depends on Discord objects
   let bonus = 0;
   if (client) {
     try {
@@ -20,45 +27,36 @@ async function addXp(userId, guildId, amount, client) {
         }
       }
     } catch (error) {
-      console.error(`Error fetching roles for user ${userId} in guild ${guildId}:`, error);
+      // Silently fail on role fetching
     }
   }
-  let totalXp = amount + bonus;
-  xp += totalXp;
+
+  xp += (amount + bonus);
+
   let leveledUp = false;
   while (xp >= xpForLevel(level + 1)) {
     level++;
     leveledUp = true;
   }
+
   profile.xp = xp;
   profile.level = level;
-  profile.last_seen = Date.now();
+
   await writeUser('profiles', userId, guildId, profile);
   return { xp, level, leveledUp, bonus };
 }
 
 async function getRank(userId, guildId) {
   const profile = await readUser('profiles', userId, guildId);
-  return { xp: profile.xp || 0, level: profile.level || 0 };
+  return { xp: profile?.xp || 0, level: profile?.level || 0 };
 }
 
-const fs = require('fs').promises;
-const path = require('path');
-
 async function getLeaderboard(guildId, limit = 10) {
-  const dir = path.join(__dirname, '../data/profiles');
-  let users = [];
-  try {
-    const files = await fs.readdir(dir);
-    for (const file of files) {
-      if (file.startsWith(guildId + '_')) {
-        const data = JSON.parse(await fs.readFile(path.join(dir, file), 'utf8'));
-        users.push({ user_id: file.split('_')[1].replace('.json',''), xp: data.xp || 0, level: data.level || 0 });
-      }
-    }
-  } catch {}
-  users.sort((a, b) => b.level - a.level || b.xp - a.xp);
-  return users.slice(0, limit);
+  const [rows] = await pool.execute(
+    'SELECT userId, xp, level FROM users WHERE guildId = ? ORDER BY level DESC, xp DESC LIMIT ?',
+    [guildId, limit]
+  );
+  return rows;
 }
 
 module.exports = { addXp, getRank, getLeaderboard, xpForLevel };
