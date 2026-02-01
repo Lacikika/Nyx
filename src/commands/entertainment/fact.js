@@ -4,7 +4,6 @@
  */
 
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const fetch = require('node-fetch');
 const t = require('../../../utils/locale');
 
 module.exports = {

@@ -9,10 +9,6 @@ const t = require('../utils/locale');
 
 // Attach after client is defined
 let client;
-let fetch;
-(async () => {
-  fetch = (await import('node-fetch')).default;
-})();
 require('dotenv').config();
 
 client = new Client({
@@ -25,7 +21,7 @@ client = new Client({
   ]
 });
 
-const dev = false; // Set to true to enable debug logging
+const dev = process.env.NODE_ENV === 'development'; // Set to true to enable debug logging
 
 client.commands = new Collection();
 client.cooldowns = new Collection();
@@ -100,6 +96,31 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
+// --- Startup Checks ---
+if (!config.token) {
+  logger.error('[STARTUP] BOT_TOKEN is missing in .env file!');
+  process.exit(1);
+}
+
+// Ensure data directories exist
+const dataDirs = [
+  './data',
+  './data/logs',
+  './data/profiles',
+  './data/guilds'
+];
+dataDirs.forEach(dir => {
+  const resolvedPath = require('path').resolve(dir);
+  if (!fs.existsSync(resolvedPath)) {
+    try {
+      fs.mkdirSync(resolvedPath, { recursive: true });
+      logger.info(`[STARTUP] Created missing directory: ${resolvedPath}`);
+    } catch (e) {
+      logger.error(`[STARTUP] Failed to create directory ${resolvedPath}:`, e);
+    }
+  }
+});
+
 client.login(config.token);
 
 // --- Automatikus parancs regisztráció (induláskor) ---
@@ -159,8 +180,9 @@ try {
 // Start the webpanel if enabled (default: always enabled)
 try {
   const { startWebPanel } = require('../webpanel/webpanel');
-  startWebPanel(50249);
-  logger.info('[WEBPANEL] Web panel started on http://116.202.112.154:50249/');
+  const port = process.env.WEBPANEL_PORT || 50249;
+  startWebPanel(port);
+  logger.info(`[WEBPANEL] Web panel started on http://localhost:${port}/`);
 } catch (e) {
   logger.warn('[WEBPANEL] Could not start web panel:', e.message);
 }

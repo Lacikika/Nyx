@@ -1,7 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const catCommand = require('../../../src/commands/entertainment/cat');
 const { CommandInteraction } = require('discord.js');
-const fetch = require('node-fetch');
 
 describe('cat command', () => {
   beforeEach(() => {
