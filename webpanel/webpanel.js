@@ -105,6 +105,10 @@ app.use((req, res, next) => {
   req.session.error = null;
   next();
 });
+
+// Csak ezután hívjuk meg, hogy az isAuthenticated elérhető legyen
+app.use(requireDiscordLoginIfProtected);
+
 // API endpoints for bot stats and data
 app.get('/api/stats', (req, res) => {
   // Example stats, replace with real logic
@@ -130,8 +134,6 @@ app.use((err, req, res, next) => {
   req.session.error = err.message || 'Unknown error occurred.';
   res.redirect(req.originalUrl || '/');
 });
-// Csak ezután hívjuk meg, hogy az isAuthenticated elérhető legyen
-app.use(requireDiscordLoginIfProtected);
 // Passport Discord OAuth2 setup: configured earlier to ensure correct ordering
 if (DISABLE_OAUTH) console.log('[WEBPANEL] Discord OAuth is DISABLED (WEBPANEL_DISABLE_OAUTH=true)');
 
@@ -366,7 +368,7 @@ app.get('/data/:type/:file', requireLogin, (req, res) => {
 
 
 function startWebPanel(port = 50249) {
-  app.listen(port, () => console.log(`Web panel running on http://116.202.112.154:${port}`));
+  app.listen(port, () => console.log(`Web panel running on http://localhost:${port}`));
 }
 
 // If run directly, start the server

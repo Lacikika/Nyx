@@ -2,6 +2,7 @@
 const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require('discord.js');
 const config = require('./config');
 const fs = require('fs');
+const path = require('path');
 const { readUser, writeUser, appendUserLog, appendGuildLog } = require('../utils/jsondb');
 const logger = require('../utils/logger');
 
@@ -14,6 +15,25 @@ let fetch;
 })();
 require('dotenv').config();
 
+// Startup Checks
+if (!process.env.BOT_TOKEN || !process.env.CLIENT_ID) {
+  console.error('[STARTUP ERROR] Missing BOT_TOKEN or CLIENT_ID in environment variables.');
+  process.exit(1);
+}
+
+// Ensure data directories exist
+const dataDir = path.join(__dirname, '../data');
+const dirs = ['logs', 'profiles', 'guilds'];
+try {
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
+  for (const d of dirs) {
+    const p = path.join(dataDir, d);
+    if (!fs.existsSync(p)) fs.mkdirSync(p);
+  }
+} catch (e) {
+  console.error('[STARTUP ERROR] Failed to create data directories:', e);
+}
+
 client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -24,7 +44,7 @@ client = new Client({
   ]
 });
 
-const dev = false; // Set to true to enable debug logging
+const dev = process.env.NODE_ENV === 'development'; // Set to true to enable debug logging
 
 client.commands = new Collection();
 
@@ -371,8 +391,9 @@ try {
 // Start the webpanel if enabled (default: always enabled)
 try {
   const { startWebPanel } = require('../webpanel/webpanel');
-  startWebPanel(50249);
-  logger.info('[WEBPANEL] Web panel started on http://116.202.112.154:50249/');
+  const port = process.env.WEBPANEL_PORT || 50249;
+  startWebPanel(port);
+  logger.info(`[WEBPANEL] Web panel started on http://localhost:${port}/`);
 } catch (e) {
   logger.warn('[WEBPANEL] Could not start web panel:', e.message);
 }

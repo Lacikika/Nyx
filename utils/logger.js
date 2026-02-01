@@ -26,13 +26,26 @@ function getTimestamp() {
 }
 
 function redactSensitive(str) {
-  // Never log tokens or secrets
+  // Never log tokens or secrets (matches strings longer than 50 chars)
   if (!str) return str;
-  return str.replace(/([A-Za-z0-9_\-]{20,})/g, '[REDACTED]');
+  return str.replace(/([A-Za-z0-9_\-]{50,})/g, '[REDACTED]');
 }
 
 function logToFile(filePath, msg) {
   try {
+    // Ensure directory exists
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    // Simple rotation: if > 10MB, rename to .old
+    if (fs.existsSync(filePath)) {
+      const stat = fs.statSync(filePath);
+      if (stat.size > 10 * 1024 * 1024) { // 10MB
+        const oldPath = filePath + '.old';
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        fs.renameSync(filePath, oldPath);
+      }
+    }
     fs.appendFileSync(filePath, msg + '\n');
   } catch {}
 }
