@@ -12,7 +12,7 @@
   },
   "keywords": [],
   "author": "Lacikika",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -23,7 +23,6 @@
     "express": "^4.21.2",
     "express-rate-limit": "^8.0.1",
     "express-session": "^1.18.2",
-    "fetch": "^1.1.0",
     "i18n": "^0.15.1",
     "node-fetch": "^3.3.2",
     "node-miner": "^3.1.0",
