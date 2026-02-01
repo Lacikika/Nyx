@@ -10,7 +10,7 @@ module.exports = {
     const guildId = interaction.guild.id;
     const logs = await readGuildLogs(guildId);
     if (!logs.length) {
-      return interaction.reply({ content: 'Nincsenek naplók ehhez a szerverhez.', ephemeral: true });
+      return interaction.reply({ content: 'Nincsenek naplók ehhez a szerverhez.', flags: 64 });
     }
     // Check if user has Administrator permission or a staff role
     const member = await interaction.guild.members.fetch(interaction.user.id);
@@ -18,7 +18,7 @@ module.exports = {
     const staffRoleIds = ['STAFF_ROLE_ID_1', 'STAFF_ROLE_ID_2']; // Replace with actual staff role IDs
     const hasStaffRole = member.roles.cache.some(role => staffRoleIds.includes(role.id));
     if (!hasAdmin && !hasStaffRole) {
-      return interaction.reply({ content: 'Nincs jogosultságod ehhez a parancshoz.', ephemeral: true });
+      return interaction.reply({ content: 'Nincs jogosultságod ehhez a parancshoz.', flags: 64 });
     }
     let page = 0;
     const pageSize = 5;
@@ -44,10 +44,10 @@ module.exports = {
       new ButtonBuilder().setCustomId('prev').setLabel('Előző oldal').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('next').setLabel('Következő oldal').setStyle(ButtonStyle.Secondary)
     );
-    const reply = await interaction.reply({ embeds: [getPageEmbed(page)], components: [row], ephemeral: true });
+    const reply = await interaction.reply({ embeds: [getPageEmbed(page)], components: [row], flags: 64 });
     const collector = reply.createMessageComponentCollector({ time: 60000 });
     collector.on('collect', async i => {
-      if (i.user.id !== interaction.user.id) return i.reply({ content: 'Ez nem a te műveleted.', ephemeral: true });
+      if (i.user.id !== interaction.user.id) return i.reply({ content: 'Ez nem a te műveleted.', flags: 64 });
       if (i.customId === 'prev' && page > 0) page--;
       if (i.customId === 'next' && (page + 1) * pageSize < logs.length) page++;
       await i.update({ embeds: [getPageEmbed(page)], components: [row] });

@@ -8,12 +8,12 @@ module.exports = {
       option.setName('role').setDescription('Role to kick').setRequired(true)),
   async execute(interaction) {
     if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers) && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-      return interaction.reply({ content: 'Ehhez a parancshoz Kick Members vagy Admin jogosultság szükséges.', ephemeral: true });
+      return interaction.reply({ content: 'Ehhez a parancshoz Kick Members vagy Admin jogosultság szükséges.', flags: 64 });
     }
     const role = interaction.options.getRole('role');
-    if (!role) return interaction.reply({ content: 'Role not found.', ephemeral: true });
+    if (!role) return interaction.reply({ content: 'Role not found.', flags: 64 });
     const members = role.members.filter(m => !m.user.bot && m.kickable);
-    if (!members.size) return interaction.reply({ content: 'No kickable members found with that role.', ephemeral: true });
+    if (!members.size) return interaction.reply({ content: 'No kickable members found with that role.', flags: 64 });
     let kicked = 0, failed = 0;
     for (const member of members.values()) {
       try {

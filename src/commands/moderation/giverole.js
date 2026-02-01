@@ -18,7 +18,7 @@ module.exports = {
     const config = await readUser('guilds', guildId, guildId);
     const requestRoles = config.requestRoles || [];
     if (requestRoles.length > 0 && !interaction.member.roles.cache.some(r => requestRoles.includes(r.id))) {
-      return interaction.reply({ content: 'Nincs jogosultságod rang kérelmezéséhez. Csak a kijelölt rang kérelmező rangok tagjai kérhetnek rangot.', ephemeral: true });
+      return interaction.reply({ content: 'Nincs jogosultságod rang kérelmezéséhez. Csak a kijelölt rang kérelmező rangok tagjai kérhetnek rangot.', flags: 64 });
     }
     const staffRoles = config.staffRoles || (config.staffRole ? [config.staffRole] : []);
     const logChannelId = config.rolesChannel || config.logChannel;
@@ -27,14 +27,14 @@ module.exports = {
     if (interaction.commandName === 'giverole' && cooldownRoleId) {
       const member = await interaction.guild.members.fetch(user.id);
       if (member.roles.cache.has(cooldownRoleId)) {
-        return interaction.reply({ content: 'Ez a felhasználó cooldown-on van, amíg rajta van a cooldown rang, nem kérhet új rangot!', ephemeral: true });
+        return interaction.reply({ content: 'Ez a felhasználó cooldown-on van, amíg rajta van a cooldown rang, nem kérhet új rangot!', flags: 64 });
       }
     }
     if (!logChannelId || !staffRoles.length) {
-      return interaction.reply({ content: 'A roles channel vagy staff role nincs beállítva a szerver konfigurációban!', ephemeral: true });
+      return interaction.reply({ content: 'A roles channel vagy staff role nincs beállítva a szerver konfigurációban!', flags: 64 });
     }
     const logChannel = await interaction.guild.channels.fetch(logChannelId).catch(() => null);
-    if (!logChannel) return interaction.reply({ content: 'A roles channel nem található!', ephemeral: true });
+    if (!logChannel) return interaction.reply({ content: 'A roles channel nem található!', flags: 64 });
     const embed = new EmbedBuilder()
       .setTitle('🏆 Rang jóváhagyás')
       .setDescription(`Felhasználó: <@${user.id}>\nRang: <@&${role.id}>\nIndok: ${reason}`)

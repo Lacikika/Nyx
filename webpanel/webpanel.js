@@ -12,6 +12,21 @@ const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const app = express();
 
+// Disable Discord OAuth if the env var is set to 'true' (case-insensitive)
+const DISABLE_OAUTH = (process.env.WEBPANEL_DISABLE_OAUTH || '').toString().toLowerCase() === 'true';
+// Configure passport strategy and serializers BEFORE initializing middleware
+if (!DISABLE_OAUTH) {
+  passport.serializeUser((user, done) => done(null, user));
+  passport.deserializeUser((obj, done) => done(null, obj));
+  passport.use(new DiscordStrategy({
+    clientID: process.env.DISCORD_CLIENT_ID || 'YOUR_CLIENT_ID',
+    clientSecret: process.env.DISCORD_CLIENT_SECRET || 'YOUR_CLIENT_SECRET',
+    callbackURL: process.env.DISCORD_CALLBACK_URL || 'http://localhost:50249/auth/discord/callback',
+    scope: ['identify', 'guilds']
+  }, (accessToken, refreshToken, profile, done) => {
+    return done(null, profile);
+  }));
+}
 // ...existing code...
 // i18n setup
 i18n.configure({
@@ -66,8 +81,10 @@ app.use(session({
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
-app.use(passport.initialize());
-app.use(passport.session());
+if (!DISABLE_OAUTH) {
+  app.use(passport.initialize());
+  app.use(passport.session());
+}
 // Theme toggle route
 app.get('/theme/:mode', (req, res) => {
   if (!req.session) req.session = {};
@@ -115,17 +132,8 @@ app.use((err, req, res, next) => {
 });
 // Csak ezután hívjuk meg, hogy az isAuthenticated elérhető legyen
 app.use(requireDiscordLoginIfProtected);
-// Passport Discord OAuth2 setup
-passport.serializeUser((user, done) => done(null, user));
-passport.deserializeUser((obj, done) => done(null, obj));
-passport.use(new DiscordStrategy({
-  clientID: process.env.DISCORD_CLIENT_ID || 'YOUR_CLIENT_ID',
-  clientSecret: process.env.DISCORD_CLIENT_SECRET || 'YOUR_CLIENT_SECRET',
-  callbackURL: process.env.DISCORD_CALLBACK_URL || 'http://localhost:50249/auth/discord/callback',
-  scope: ['identify', 'guilds']
-}, (accessToken, refreshToken, profile, done) => {
-  return done(null, profile);
-}));
+// Passport Discord OAuth2 setup: configured earlier to ensure correct ordering
+if (DISABLE_OAUTH) console.log('[WEBPANEL] Discord OAuth is DISABLED (WEBPANEL_DISABLE_OAUTH=true)');
 
 function requireDiscordLogin(req, res, next) {
   // Engedélyezzük, ha Discorddal vagy lokális fiókkal be van jelentkezve
@@ -134,6 +142,12 @@ function requireDiscordLogin(req, res, next) {
     sessionUser: req.session.user,
     user: req.user
   });
+  // If OAuth disabled, skip Discord redirect and allow local session-based login
+  if (DISABLE_OAUTH) {
+    if (req.session && req.session.user) return next();
+    // If OAuth is disabled and no local session, allow access to public areas or redirect to /login
+    return res.redirect('/login');
+  }
   if (typeof req.isAuthenticated === 'function' && req.isAuthenticated()) return next();
   if (req.session.user) return next();
   console.log('Redirecting to /auth/discord');
@@ -158,26 +172,38 @@ async function setWebpanelUser(username, hash) {
   await writeUser(WEBPANEL_USER_TYPE, username, WEBPANEL_USER_GUILD, { hash });
 }
 // Discord OAuth2 login routes
-app.get('/auth/discord', passport.authenticate('discord'));
-app.get('/auth/discord/callback', passport.authenticate('discord', {
-  failureRedirect: '/login'
-}), (req, res, next) => {
-  console.log('Discord callback, req.user:', req.user);
-  console.log('Discord callback, session:', req.session);
-  if (req.user) {
-    req.login(req.user, function(err) {
-      if (err) {
-        console.log('req.login error:', err);
-        return next(err);
-      }
-      console.log('User logged in, session:', req.session);
-      res.redirect('/');
-    });
-  } else {
-    console.log('No user in callback!');
+if (!DISABLE_OAUTH) {
+  app.get('/auth/discord', passport.authenticate('discord'));
+  app.get('/auth/discord/callback', passport.authenticate('discord', {
+    failureRedirect: '/login'
+  }), (req, res, next) => {
+    console.log('Discord callback, req.user:', req.user);
+    console.log('Discord callback, session:', req.session);
+    if (req.user) {
+      req.login(req.user, function(err) {
+        if (err) {
+          console.log('req.login error:', err);
+          return next(err);
+        }
+        console.log('User logged in, session:', req.session);
+        res.redirect('/');
+      });
+    } else {
+      console.log('No user in callback!');
+      res.redirect('/login');
+    }
+  });
+} else {
+  // If OAuth disabled, provide a no-op route to avoid 404s
+  app.get('/auth/discord', (req, res) => {
+    req.session && (req.session.error = 'Discord OAuth is disabled on this webpanel.');
     res.redirect('/login');
-  }
-});
+  });
+  app.get('/auth/discord/callback', (req, res) => {
+    req.session && (req.session.error = 'Discord OAuth is disabled on this webpanel.');
+    res.redirect('/login');
+  });
+}
 app.get('/logout', (req, res) => {
   req.logout(() => res.redirect('/login'));
 });

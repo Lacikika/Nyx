@@ -26,7 +26,7 @@ module.exports = {
   async execute(interaction) {
     try {
       if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-        return interaction.reply({ content: 'Ehhez a parancshoz adminisztrátori jogosultság szükséges.', ephemeral: true });
+        return interaction.reply({ content: 'Ehhez a parancshoz adminisztrátori jogosultság szükséges.', flags: 64 });
       }
       const guildId = interaction.guild.id;
       const config = await readUser('guilds', guildId, guildId);
@@ -84,10 +84,10 @@ module.exports = {
         .setThumbnail(interaction.guild.iconURL())
         .setFooter({ text: 'Állítsd be a szervert a legjobb élményhez!' })
         .setTimestamp();
-      await interaction.reply({ embeds: [embed], ephemeral: true });
+      await interaction.reply({ embeds: [embed], flags: 64 });
     } catch (error) {
       console.error('Error in guildconfig command:', error);
-      await interaction.reply({ content: 'Hiba történt a parancs végrehajtása során.', ephemeral: true });
+      await interaction.reply({ content: 'Hiba történt a parancs végrehajtása során.', flags: 64 });
     }
   },
 };

@@ -12,7 +12,7 @@ module.exports = {
     const user = interaction.options.getUser('target');
     const logs = await readGlobalUserLogs(user.id);
     if (!logs.length) {
-      return interaction.reply({ content: 'Nincsenek naplók ehhez a felhasználóhoz.', ephemeral: true });
+      return interaction.reply({ content: 'Nincsenek naplók ehhez a felhasználóhoz.', flags: 64 });
     }
     let page = 0;
     const pageSize = 5;
@@ -38,10 +38,10 @@ module.exports = {
       new ButtonBuilder().setCustomId('prev').setLabel('Előző oldal').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('next').setLabel('Következő oldal').setStyle(ButtonStyle.Secondary)
     );
-    const reply = await interaction.reply({ embeds: [getPageEmbed(page)], components: [row], ephemeral: true });
+    const reply = await interaction.reply({ embeds: [getPageEmbed(page)], components: [row], flags: 64 });
     const collector = reply.createMessageComponentCollector({ time: 60000 });
     collector.on('collect', async i => {
-      if (i.user.id !== interaction.user.id) return i.reply({ content: 'Ez nem a te műveleted.', ephemeral: true });
+      if (i.user.id !== interaction.user.id) return i.reply({ content: 'Ez nem a te műveleted.', flags: 64 });
       if (i.customId === 'prev' && page > 0) page--;
       if (i.customId === 'next' && (page + 1) * pageSize < logs.length) page++;
       await i.update({ embeds: [getPageEmbed(page)], components: [row] });

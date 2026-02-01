@@ -35,7 +35,7 @@ module.exports = {
       new ButtonBuilder().setCustomId('help_prev').setLabel('Elozo  ').setStyle(ButtonStyle.Secondary).setDisabled(true),
       new ButtonBuilder().setCustomId('help_next').setLabel('Kovetkezo  ').setStyle(ButtonStyle.Primary)
     );
-    const reply = await interaction.reply({ embeds: [pages[page]], components: [row], ephemeral: true, fetchReply: true });
+    const reply = await interaction.reply({ embeds: [pages[page]], components: [row], flags: 64, fetchReply: true });
     const collector = reply.createMessageComponentCollector({ filter: i => i.user.id === interaction.user.id, time: 120000 });
     collector.on('collect', async i => {
       if (i.customId === 'help_prev') page = Math.max(0, page - 1);

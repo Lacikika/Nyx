@@ -35,6 +35,6 @@ ${level === 0 ? '⚓ Kezdd el az utad a chatben, hogy szintet lépj!' : '⛵ Tar
       message_content: null,
       date: Date.now()
     }, interaction.user.username);
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: 64 });
   },
 };

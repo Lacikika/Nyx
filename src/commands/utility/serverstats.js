@@ -56,6 +56,6 @@ module.exports = {
       )
       .setFooter({ text: 'Maradj aktiv es erezd jol magad!  ' })
       .setTimestamp();
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: 64 });
   },
 };

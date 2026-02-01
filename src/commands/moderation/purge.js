@@ -18,7 +18,7 @@ module.exports = {
     }
     const amount = interaction.options.getInteger('amount');
     if (!amount || amount < 1 || amount > 100) {
-      return interaction.reply({ content: 'Adj meg egy számot 1 és 100 között!', ephemeral: true });
+      return interaction.reply({ content: 'Adj meg egy számot 1 és 100 között!', flags: 64 });
     }
     await interaction.channel.bulkDelete(amount, true);
     const embed = new EmbedBuilder()
@@ -26,6 +26,6 @@ module.exports = {
       .setDescription(`${amount} üzenet törölve ebben a csatornában.`)
       .setColor('Orange')
       .setFooter({ text: '⛏️ by Laci 🛠️' });
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: 64 });
   },
 };
