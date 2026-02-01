@@ -212,7 +212,8 @@ async function enforceDataLimit() {
       const filePath = path.join(logsDir, file);
       const stat = await fs.stat(filePath);
       if (stat.isFile()) {
-        const data = JSON.parse(await fs.readFile(filePath, 'utf8'));
+        const buf = await fs.readFile(filePath);
+        const data = JSON.parse(decrypt(Buffer.isBuffer(buf) ? buf : Buffer.from(buf)));
         if (Array.isArray(data.entries) && data.entries.length > 0) {
           logFiles.push({ filePath, oldest: data.entries[data.entries.length - 1]?.date || 0 });
         }
@@ -226,10 +227,12 @@ async function enforceDataLimit() {
   for (const log of logFiles) {
     if (totalSize - removed < MAX_DATA_SIZE) break;
     try {
-      const data = JSON.parse(await fs.readFile(log.filePath, 'utf8'));
+      const buf = await fs.readFile(log.filePath);
+      const data = JSON.parse(decrypt(Buffer.isBuffer(buf) ? buf : Buffer.from(buf)));
       if (Array.isArray(data.entries) && data.entries.length > 0) {
         data.entries.pop(); // Remove oldest
-        await fs.writeFile(log.filePath, JSON.stringify(data, null, 2));
+        const enc = encrypt(JSON.stringify(data, null, 2));
+        await fs.writeFile(log.filePath, enc);
         removed += INTERACTION_ESTIMATED_SIZE;
       }
     } catch {}
