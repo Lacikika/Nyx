@@ -31,23 +31,124 @@ function redactSensitive(str) {
   return str.replace(/([A-Za-z0-9_\-]{50,})/g, '[REDACTED]');
 }
 
-function logToFile(filePath, msg) {
-  try {
-    // Ensure directory exists
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+// --- Asynchronous Log Management ---
 
-    // Simple rotation: if > 10MB, rename to .old
-    if (fs.existsSync(filePath)) {
-      const stat = fs.statSync(filePath);
-      if (stat.size > 10 * 1024 * 1024) { // 10MB
-        const oldPath = filePath + '.old';
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-        fs.renameSync(filePath, oldPath);
+const MAX_LOG_SIZE = 10 * 1024 * 1024; // 10MB
+
+class LogStream {
+  constructor(filePath) {
+    this.filePath = filePath;
+    this.stream = null;
+    this.size = 0;
+    this.rotating = false;
+    this.queue = [];
+    this.initialized = false;
+
+    this.init();
+  }
+
+  async init() {
+    try {
+      const dir = path.dirname(this.filePath);
+      // Ensure directory exists
+      await fs.promises.mkdir(dir, { recursive: true });
+
+      // Get current size if file exists
+      try {
+        const stat = await fs.promises.stat(this.filePath);
+        this.size = stat.size;
+      } catch {
+        this.size = 0;
       }
+
+      this.openStream();
+      this.initialized = true;
+      this.processQueue();
+    } catch (err) {
+      console.error(`[LOGGER] Failed to initialize log stream for ${this.filePath}:`, err);
     }
-    fs.appendFileSync(filePath, msg + '\n');
-  } catch {}
+  }
+
+  openStream() {
+    this.stream = fs.createWriteStream(this.filePath, { flags: 'a' });
+    this.stream.on('error', (err) => {
+      console.error(`[LOGGER] Stream error for ${this.filePath}:`, err);
+    });
+  }
+
+  write(msg) {
+    this.queue.push(msg);
+    if (this.initialized && !this.rotating) {
+      this.processQueue();
+    }
+  }
+
+  processQueue() {
+    while (this.queue.length > 0) {
+      if (this.rotating) return;
+
+      if (this.size >= MAX_LOG_SIZE) {
+        this.rotate();
+        return;
+      }
+
+      const msg = this.queue.shift();
+      const data = msg + '\n';
+      const len = Buffer.byteLength(data);
+
+      // If stream is not writable (e.g. error or closed), try to reopen
+      if (!this.stream || this.stream.destroyed) {
+          this.openStream();
+      }
+
+      this.stream.write(data);
+      this.size += len;
+    }
+  }
+
+  async rotate() {
+    if (this.rotating) return;
+    this.rotating = true;
+
+    try {
+      if (this.stream) {
+        await new Promise((resolve) => this.stream.end(resolve));
+      }
+
+      const oldPath = this.filePath + '.old';
+      try {
+        await fs.promises.unlink(oldPath);
+      } catch (e) {
+        // Ignore if file doesn't exist
+      }
+
+      await fs.promises.rename(this.filePath, oldPath);
+
+      this.size = 0;
+      this.openStream();
+    } catch (err) {
+      console.error(`[LOGGER] Rotation failed for ${this.filePath}:`, err);
+      // Try to recover by reopening stream for current file
+      this.size = 0; // Reset size assumption to avoid infinite loop
+      this.openStream();
+    } finally {
+      this.rotating = false;
+      this.processQueue();
+    }
+  }
+}
+
+const logStreams = new Map();
+
+function getLogStream(filePath) {
+  if (!logStreams.has(filePath)) {
+    logStreams.set(filePath, new LogStream(filePath));
+  }
+  return logStreams.get(filePath);
+}
+
+function logToFile(filePath, msg) {
+  getLogStream(filePath).write(msg);
 }
 
 function log(level, message, data = null, opts = {}) {
