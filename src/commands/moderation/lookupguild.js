@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // Utility: lookupguild.js
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { readGuildLogs } = require('../../../utils/jsondb.js');
@@ -26,7 +27,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle('🏴‍☠️🏰 Szerver naplók')
         .setDescription('🏴‍☠️ Ezen a szerveren történt események:')
-        .setColor(0x3498db)
+        .setColor(botConfig.customization.embedColors.info)
         .setThumbnail(interaction.guild.iconURL())
         .setFooter({ text: '🏴‍☠️ Szerver napló lekérdezés • Nyx' })
         .setTimestamp();

@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 const fs = require('fs');
@@ -32,8 +33,8 @@ module.exports = {
       .setTitle('🗑️ Rang torles jovahagyas  ')
       .setDescription(`Felhasznalo: <@${user.id}>\nTorlendo rang: <@&${role.id}>\nIndok: ${reason}`)
       .addFields({ name: 'Kerelezte', value: `<@${interaction.user.id}>`, inline: true })
-      .setColor('Orange')
-      .setFooter({ text: 'by Laci' })
+      .setColor(botConfig.customization.embedColors.moderation)
+      .setFooter({ text: botConfig.customization.footer.text, iconURL: botConfig.customization.footer.iconURL || undefined })
       .setTimestamp();
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('deleterole_accept').setEmoji('✅').setStyle(ButtonStyle.Success),
@@ -90,7 +91,7 @@ module.exports = {
               { name: 'Kerelezte', value: `<@${interaction.user.id}>`, inline: true },
               { name: 'Cooldown ido', value: `${cooldownDays} nap`, inline: true }
             )
-            .setColor('Green')
+            .setColor(botConfig.customization.embedColors.success)
             .setFooter({ text: `Elfogadta: ${i.user.tag}` })
             .setTimestamp();
           await deleteChannel.send({ embeds: [approveEmbed] });
@@ -104,7 +105,7 @@ module.exports = {
             // Ha nem lehet uzenetet kuldeni (pl. privat uzenetek tiltva), ne csinaljon semmit
           }
         } else {
-          await msg.edit({ embeds: [embed.setColor('Red').setFooter({ text: `Elutasitotta: ${i.user.tag} | Indok: ${m.content}` })], components: [] });
+          await msg.edit({ embeds: [embed.setColor(botConfig.customization.embedColors.error).setFooter({ text: `Elutasitotta: ${i.user.tag} | Indok: ${m.content}` })], components: [] });
           await msg.delete().catch(() => {});
           const declineEmbed = new EmbedBuilder()
             .setTitle('❌ Rang torles elutasitva  ')
@@ -113,7 +114,7 @@ module.exports = {
               { name: 'Staff indok', value: `${m.content}\n**Staff:** <@${i.user.id}>` },
               { name: 'Kerelezte', value: `<@${interaction.user.id}>`, inline: true }
             )
-            .setColor('Red')
+            .setColor(botConfig.customization.embedColors.error)
             .setFooter({ text: `Elutasitotta: ${i.user.tag}` })
             .setTimestamp();
           await deleteChannel.send({ embeds: [declineEmbed] });

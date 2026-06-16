@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // Warn command
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { readUser, writeUser } = require('../../../utils/jsondb');
@@ -15,7 +16,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle('Nincs jogosultság')
         .setDescription('Ehhez a parancshoz Kick Members vagy Admin jogosultság szükséges.')
-        .setColor('Red');
+        .setColor(botConfig.customization.embedColors.error);
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
     const user = interaction.options.getUser('target');
@@ -43,8 +44,8 @@ module.exports = {
       .setTitle('Felhasználó figyelmeztetve')
       .setDescription(`${user.tag} figyelmeztetést kapott.`)
       .addFields({ name: 'Indok', value: reason })
-      .setColor('Orange')
-      .setFooter({ text: '⛏️ by Laci 🛠️' });
+      .setColor(botConfig.customization.embedColors.moderation)
+      .setFooter({ text: botConfig.customization.footer.text, iconURL: botConfig.customization.footer.iconURL || undefined });
     await interaction.reply({ embeds: [embed] });
   },
 };

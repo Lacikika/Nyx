@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // Utility: help.js
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
@@ -13,22 +14,22 @@ module.exports = {
         .setTitle('Moderacio')
         .setDescription('Moderacios parancsok')
         .addFields({ name: 'Parancsok', value: '`ban`, `kick`, `warn`, `purge`, `kickrole`, `giverole`, `deleterole`' })
-        .setColor(0x5865F2),
+        .setColor(botConfig.customization.embedColors.primary),
       new EmbedBuilder()
         .setTitle('Segedletek')
         .setDescription('Utility parancsok')
         .addFields({ name: 'Parancsok', value: '`info`, `sugo`, `szerverstatisztika`, `guildconfig`, `rang`, `ranglista`' })
-        .setColor(0x5865F2),
+        .setColor(botConfig.customization.embedColors.primary),
       new EmbedBuilder()
         .setTitle('Napló lekerdezes  ')
         .setDescription('Napló lekerdezo parancsok')
         .addFields({ name: 'Parancsok', value: '`lookupuser <felhasznalo>`, `lookupguild`' })
-        .setColor(0x5865F2),
+        .setColor(botConfig.customization.embedColors.primary),
       new EmbedBuilder()
         .setTitle('Szorakozas  ')
         .setDescription('Szorakoztato parancsok  ')
         .addFields({ name: 'Parancsok', value: '`meme`, `joke`, `8ball`' })
-        .setColor(0x5865F2)
+        .setColor(botConfig.customization.embedColors.primary)
     ];
     let page = 0;
     const row = new ActionRowBuilder().addComponents(

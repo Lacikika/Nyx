@@ -1,0 +1,24 @@
+{
+  "customization": {
+    "embedColors": {
+      "primary": "#5865F2",
+      "success": "#2ECC71",
+      "error": "#ED4245",
+      "warning": "#FEE75C",
+      "info": "#3498DB",
+      "moderation": "#E67E22",
+      "rank": "#FFD700"
+    },
+    "footer": {
+      "text": "Nyx Discord Bot",
+      "iconURL": ""
+    }
+  },
+  "commands": {
+    "categories": {
+      "moderation": true,
+      "utility": true,
+      "entertainment": true
+    }
+  }
+}

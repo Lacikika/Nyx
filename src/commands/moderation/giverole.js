@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 const fs = require('fs');
@@ -40,8 +41,8 @@ module.exports = {
       .setDescription(`Felhasználó: <@${user.id}>\nRang: <@&${role.id}>\nIndok: ${reason}`)
       .addFields(
         { name: 'Kérelmezte', value: `<@${interaction.user.id}>`, inline: true },)
-      .setColor('Yellow')
-      .setFooter({ text: `⛏️ by Laci🛠️` })
+      .setColor(botConfig.customization.embedColors.warning)
+      .setFooter({ text: botConfig.customization.footer.text, iconURL: botConfig.customization.footer.iconURL || undefined })
       .setTimestamp();
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('giverole_accept').setEmoji('✅').setStyle(ButtonStyle.Success),
@@ -69,7 +70,7 @@ module.exports = {
         if (i.customId === 'giverole_accept') {
           const targetMember = await interaction.guild.members.fetch(user.id);
           await targetMember.roles.add(role);
-          await msg.edit({ embeds: [embed.setColor('Green').setFooter({ text: `Elfogadta: ${i.user.tag} | Indok: ${m.content}` })], components: [] });
+          await msg.edit({ embeds: [embed.setColor(botConfig.customization.embedColors.success).setFooter({ text: `Elfogadta: ${i.user.tag} | Indok: ${m.content}` })], components: [] });
           await msg.delete().catch(() => {});
           const approveEmbed = new EmbedBuilder()
             .setTitle('✅ Rang kiosztva')
@@ -78,12 +79,12 @@ module.exports = {
               { name: 'Staff indok', value: `${m.content}\n**Staff:** <@${i.user.id}>` },
               { name: 'Kérelmezte', value: `<@${interaction.user.id}>`, inline: true }
             )
-            .setColor('Green')
+            .setColor(botConfig.customization.embedColors.success)
             .setFooter({ text: `Elfogadta: ${i.user.tag}` })
             .setTimestamp();
           await logChannel.send({ embeds: [approveEmbed] });
         } else {
-          await msg.edit({ embeds: [embed.setColor('Red').setFooter({ text: `Elutasította: ${i.user.tag} | Indok: ${m.content}` })], components: [] });
+          await msg.edit({ embeds: [embed.setColor(botConfig.customization.embedColors.error).setFooter({ text: `Elutasította: ${i.user.tag} | Indok: ${m.content}` })], components: [] });
           await msg.delete().catch(() => {});
           const declineEmbed = new EmbedBuilder()
             .setTitle('❌ Rang elutasítva')
@@ -92,7 +93,7 @@ module.exports = {
               { name: 'Staff indok', value: `${m.content}\n**Staff:** <@${i.user.id}>` },
               { name: 'Kérelmezte', value: `<@${interaction.user.id}>`, inline: true }
             )
-            .setColor('Red')
+            .setColor(botConfig.customization.embedColors.error)
             .setFooter({ text: `Elutasította: ${i.user.tag}` })
             .setTimestamp();
           await logChannel.send({ embeds: [declineEmbed] });

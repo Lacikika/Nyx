@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
 
@@ -80,7 +81,7 @@ module.exports = {
           { name: 'Staff rang', value: staffRole ? `<@&${staffRole.id}>` : (config.staffRole ? `<@&${config.staffRole}>` : 'Nincs beállítva'), inline: true },
           { name: 'Cooldown rang', value: roleCooldown ? `<@&${roleCooldown.id}>` : (config.roleCooldown ? `<@&${config.roleCooldown}>` : 'Nincs beállítva'), inline: true }
         )
-        .setColor('Aqua')
+        .setColor(botConfig.customization.embedColors.info)
         .setThumbnail(interaction.guild.iconURL())
         .setFooter({ text: 'Állítsd be a szervert a legjobb élményhez!' })
         .setTimestamp();

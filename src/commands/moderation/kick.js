@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // Example moderation command: kick.js
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
@@ -13,7 +14,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle('Nincs jogosultság')
         .setDescription('Ehhez a parancshoz Kick Members vagy Admin jogosultság szükséges.')
-        .setColor('Red');
+        .setColor(botConfig.customization.embedColors.error);
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
     const member = interaction.options.getMember('target');
@@ -21,7 +22,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle('Kirúgás sikertelen')
         .setDescription('Ezt a felhasználót nem tudom kirúgni.')
-        .setColor('Red');
+        .setColor(botConfig.customization.embedColors.error);
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
     await member.kick();
@@ -44,8 +45,8 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('Felhasználó kirúgva')
       .setDescription(`${member.user.tag} ki lett rúgva.`)
-      .setColor('Orange')
-      .setFooter({ text: '⛏️ by Laci 🛠️' });
+      .setColor(botConfig.customization.embedColors.moderation)
+      .setFooter({ text: botConfig.customization.footer.text, iconURL: botConfig.customization.footer.iconURL || undefined });
     interaction.client.logToGuildChannel(guildId, embed);
     await interaction.reply({ embeds: [embed] });
   },
