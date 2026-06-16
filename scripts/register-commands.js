@@ -21,13 +21,20 @@ for (const folder of commandFolders) {
   }
 }
 
-const clientId = process.env.CLIENT_ID;
+const clientId = process.env.CLIENT_ID || config.clientId;
+const botToken = process.env.BOT_TOKEN || config.token;
+
 if (!clientId) {
     console.error('CLIENT_ID is not set in the environment variables. Please check your .env file.');
     process.exit(1);
 }
 
-const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+if (!botToken) {
+    console.error('BOT_TOKEN is not set in the environment variables. Please check your .env file.');
+    process.exit(1);
+}
+
+const rest = new REST({ version: '10' }).setToken(botToken);
 const registeredNames = commands.map(cmd => `/${cmd.name || cmd.toJSON().name}`);
 
 (async () => {
