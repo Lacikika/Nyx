@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // Entertainment: 8ball.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
@@ -24,7 +25,7 @@ module.exports = {
         )
         .setColor('Random')
         .setThumbnail('https://cdn-icons-png.flaticon.com/512/616/616494.png')
-        .setFooter({ text: '⛏️ by Laci 🛠️' })
+        .setFooter({ text: botConfig.customization.footer.text, iconURL: botConfig.customization.footer.iconURL || undefined })
         .setTimestamp();
       // Log 8ball command usage
       await appendUserLog('logs', interaction.user.id, interaction.guild.id, {

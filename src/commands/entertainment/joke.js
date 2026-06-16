@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // Entertainment: joke.js
 const { SlashCommandBuilder } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
@@ -31,7 +32,7 @@ module.exports = {
       .setDescription(joke)
       .setColor('Random')
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/616/616489.png')
-      .setFooter({ text: '⛏️ by Laci 🛠️' })
+      .setFooter({ text: botConfig.customization.footer.text, iconURL: botConfig.customization.footer.iconURL || undefined })
       .setTimestamp();
     await interaction.reply({ embeds: [embed] });
   },

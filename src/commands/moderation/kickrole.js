@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 
 module.exports = {
@@ -30,8 +31,8 @@ module.exports = {
         { name: 'Kirúgva', value: String(kicked), inline: true },
         { name: 'Sikertelen', value: String(failed), inline: true }
       )
-      .setColor('Orange')
-      .setFooter({ text: '⛏️ by Laci 🛠️' });
+      .setColor(botConfig.customization.embedColors.moderation)
+      .setFooter({ text: botConfig.customization.footer.text, iconURL: botConfig.customization.footer.iconURL || undefined });
     await interaction.reply({ embeds: [embed] });
   },
 };

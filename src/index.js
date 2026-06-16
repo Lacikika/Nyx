@@ -51,6 +51,11 @@ client.commands = new Collection();
 // Dynamically load commands
 const commandFolders = fs.readdirSync('./src/commands');
 for (const folder of commandFolders) {
+  // Check if category is enabled in config
+  if (config.commands && config.commands.categories && config.commands.categories[folder] === false) {
+    console.log(`[COMMAND LOAD] Skipping category: ${folder} (disabled in config)`);
+    continue;
+  }
   const commandFiles = fs.readdirSync(`./src/commands/${folder}`).filter(file => file.endsWith('.js'));
   for (const file of commandFiles) {
     const command = require(`./commands/${folder}/${file}`);

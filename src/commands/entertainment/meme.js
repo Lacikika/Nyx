@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // Example entertainment command: meme.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const https = require('https');
@@ -22,7 +23,7 @@ module.exports = {
             .setImage(memeUrl)
             .setURL(meme.postLink || memeUrl)
             .setColor('Random')
-            .setFooter({ text: '⛏️ by Laci 🛠️' })
+            .setFooter({ text: botConfig.customization.footer.text, iconURL: botConfig.customization.footer.iconURL || undefined })
             .setTimestamp();
           await interaction.reply({ embeds: [embed] });
           

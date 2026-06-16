@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // Utility: lookupuser.js
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { readGlobalUserLogs } = require('../../../utils/jsondb.js');
@@ -20,7 +21,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle('🏴‍☠️👤 Felhasználó infó')
         .setDescription(`🏴‍☠️ Információk <@${user.id}> felhasználóról:`)
-        .setColor(0x3498db)
+        .setColor(botConfig.customization.embedColors.info)
         .setThumbnail(user.displayAvatarURL())
         .setFooter({ text: '🏴‍☠️ Felhasználó napló lekérdezés • Nyx' })
         .setTimestamp();

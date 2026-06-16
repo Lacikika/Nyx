@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // Purge command
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
@@ -13,7 +14,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle('Nincs jogosultság')
         .setDescription('Ehhez a parancshoz Manage Messages vagy Admin jogosultság szükséges.')
-        .setColor('Red');
+        .setColor(botConfig.customization.embedColors.error);
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
     const amount = interaction.options.getInteger('amount');
@@ -24,8 +25,8 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('Üzenetek törölve')
       .setDescription(`${amount} üzenet törölve ebben a csatornában.`)
-      .setColor('Orange')
-      .setFooter({ text: '⛏️ by Laci 🛠️' });
+      .setColor(botConfig.customization.embedColors.moderation)
+      .setFooter({ text: botConfig.customization.footer.text, iconURL: botConfig.customization.footer.iconURL || undefined });
     await interaction.reply({ embeds: [embed], flags: 64 });
   },
 };

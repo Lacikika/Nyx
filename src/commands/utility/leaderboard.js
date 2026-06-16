@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // commands/utility/leaderboard.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getLeaderboard } = require('../../../utils/rank');
@@ -14,7 +15,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('🏴‍☠️🏆 Szerver ranglista')
       .setDescription('🏴‍☠️ A szerver legaktívabb tagjai XP alapján!')
-      .setColor(0xFFD700)
+      .setColor(botConfig.customization.embedColors.rank)
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828884.png')
       .addFields(
         { name: 'Ranglista', value: desc }

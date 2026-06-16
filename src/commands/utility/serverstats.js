@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // Utility: serverstats.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
@@ -39,7 +40,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('Szerver statisztikak  ')
       .setDescription('Itt lathatod a szerver jelenlegi statisztikait  :')
-      .setColor(0x5865F2)
+      .setColor(botConfig.customization.embedColors.primary)
       .setThumbnail(interaction.guild.iconURL())
       .addFields(
         { name: 'Szerver', value: guild.name, inline: true },

@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // Ban command
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { readUser, writeUser, appendUserLog } = require('../../../utils/jsondb');
@@ -13,7 +14,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle('Nincs jogosultság')
         .setDescription('Ehhez a parancshoz Ban Members vagy Admin jogosultság szükséges.')
-        .setColor('Red');
+        .setColor(botConfig.customization.embedColors.error);
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
     const member = interaction.options.getMember('target');
@@ -21,7 +22,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle('Kitiltás sikertelen')
         .setDescription('Ezt a felhasználót nem tudom kitiltani.')
-        .setColor('Red');
+        .setColor(botConfig.customization.embedColors.error);
       return interaction.reply({ embeds: [embed], flags: 64 });
     }
     await member.ban();
@@ -44,8 +45,8 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('Felhasználó kitiltva')
       .setDescription(`${member.user.tag} ki lett tiltva.`)
-      .setColor('Orange')
-      .setFooter({ text: '⛏️ by Laci 🛠️' });
+      .setColor(botConfig.customization.embedColors.moderation)
+      .setFooter({ text: botConfig.customization.footer.text, iconURL: botConfig.customization.footer.iconURL || undefined });
     interaction.client.logToGuildChannel(guildId, embed);
     await interaction.reply({ embeds: [embed] });
 
@@ -53,7 +54,7 @@ module.exports = {
     const helpEmbed = new EmbedBuilder()
       .setTitle('🛠️ Nyx Moderation Commands')
       .setDescription('Manage your server with style!')
-      .setColor(0xED4245)
+      .setColor(botConfig.customization.embedColors.error)
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828843.png')
       .addFields(
         { name: '🔨 Ban', value: 'Ban a member from the server', inline: true },

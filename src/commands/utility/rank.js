@@ -1,3 +1,4 @@
+const botConfig = require("../../config.js");
 // commands/utility/rank.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getRank, xpForLevel } = require('../../../utils/rank');
@@ -21,9 +22,9 @@ module.exports = {
 
 ${level === 0 ? '⚓ Kezdd el az utad a chatben, hogy szintet lépj!' : '⛵ Tartsd a tempót, hogy magasabb szintet érj el!'}
 `)
-      .setColor(0xFFD700)
+      .setColor(botConfig.customization.embedColors.rank)
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828884.png')
-      .setFooter({ text: '🏴‍☠️ Aktívabb chat = magasabb szint! | Nyx RP Bot', iconURL: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' })
+      .setFooter({ text: '🏴‍☠️ Aktívabb chat = magasabb szint! | Nyx RP Bot', iconURL: botConfig.customization.footer.iconURL || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' })
       .setTimestamp();
     // Log rank command usage
     await appendUserLog('logs', interaction.user.id, interaction.guild.id, {
