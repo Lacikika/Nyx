@@ -33,7 +33,7 @@ jobs:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
 
       - name: Send success notification to Discord
-        if: success()
+        if: success() && env.DISCORD_WEBHOOK_URL != ''
         run: |
           curl -X POST "$DISCORD_WEBHOOK_URL" \
                -H "Content-Type: application/json" \
@@ -42,7 +42,7 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Send failure notification to Discord
-        if: failure()
+        if: failure() && env.DISCORD_WEBHOOK_URL != ''
         run: |
           curl -X POST "$DISCORD_WEBHOOK_URL" \
                -H "Content-Type: application/json" \
