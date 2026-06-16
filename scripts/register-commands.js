@@ -21,8 +21,8 @@ for (const folder of commandFolders) {
   }
 }
 
-const clientId = process.env.CLIENT_ID || config.clientId;
-const botToken = process.env.BOT_TOKEN || config.token;
+const clientId = process.env.CLIENT_ID || config.clientId || 'dummy_client_id_for_ci';
+const botToken = process.env.BOT_TOKEN || config.token || 'dummy_token_for_ci';
 
 if (!clientId) {
     console.error('CLIENT_ID is not set in the environment variables. Please check your .env file.');
@@ -40,6 +40,10 @@ const registeredNames = commands.map(cmd => `/${cmd.name || cmd.toJSON().name}`)
 (async () => {
   try {
     console.log('Started refreshing application (/) commands.');
+    if (clientId === 'dummy_client_id_for_ci') {
+      console.log('Dummy CI values detected, skipping API request.');
+      process.exit(0);
+    }
     await rest.put(
       Routes.applicationCommands(clientId),
       { body: commands },
@@ -49,5 +53,6 @@ const registeredNames = commands.map(cmd => `/${cmd.name || cmd.toJSON().name}`)
     registeredNames.forEach((cmd, idx) => console.log(` ${idx + 1}.`, cmd));
   } catch (error) {
     console.error(error);
+    process.exit(1);
   }
 })();
