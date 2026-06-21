@@ -16,12 +16,14 @@ for (const folder of commandFolders) {
 }
 
 const clientId = process.env.CLIENT_ID;
-if (!clientId) {
-    console.error('CLIENT_ID is not set in the environment variables. Please check your .env file.');
-    process.exit(1);
+const botToken = process.env.BOT_TOKEN || process.env.DISCORD_TOKEN; // CI uses DISCORD_TOKEN
+
+if (!clientId || !botToken) {
+    console.error('CLIENT_ID or BOT_TOKEN/DISCORD_TOKEN is not set in the environment variables. Skipping command registration.');
+    process.exit(0);
 }
 
-const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+const rest = new REST({ version: '10' }).setToken(botToken);
 const registeredNames = commands.map(cmd => `/${cmd.name || cmd.toJSON().name}`);
 
 (async () => {
