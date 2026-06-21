@@ -3,9 +3,40 @@
 const { Events, PermissionFlagsBits } = require('discord.js');
 const { readUser } = require('../../utils/jsondb');
 const logger = require('../../utils/logger');
+const fs = require('fs');
+const path = require('path');
 
 // In-memory spam tracker: { [guildId_userId]: [timestamps] }
 const spamMap = new Map();
+
+// --- Global Bad words cache ---
+let badWordsCache = null;
+
+function loadBadWords() {
+  if (badWordsCache) return badWordsCache;
+  try {
+    const badwordsPath = path.join(__dirname, '../../data/badwords.json');
+    if (!badwordsPath.startsWith(path.join(__dirname, '../../data'))) throw new Error('Badwords path traversal detected!');
+
+    if (fs.existsSync(badwordsPath)) {
+      const parsed = JSON.parse(fs.readFileSync(badwordsPath, 'utf8'));
+      if (Array.isArray(parsed)) {
+        badWordsCache = parsed.map(word => ({
+          original: word,
+          lower: word.toLowerCase()
+        }));
+      } else {
+        badWordsCache = [];
+      }
+    } else {
+      badWordsCache = [];
+    }
+  } catch (e) {
+    logger.error('MODERATION: Failed to load badwords.json', e);
+    badWordsCache = [];
+  }
+  return badWordsCache;
+}
 
 module.exports = {
   name: Events.MessageCreate,
@@ -28,21 +59,13 @@ module.exports = {
     const { logChannel, spamLimit = 5, timeWindow = 7000 } = config;
     const logChannelId = config.logChannelId || logChannel; // fallback for legacy
 
-    // --- Bad word filter (from JSON file, secure) ---
-    let badWords = [];
-    try {
-      const fs = require('fs');
-      const path = require('path');
-      const badwordsPath = path.join(__dirname, '../../data/badwords.json');
-      if (!badwordsPath.startsWith(path.join(__dirname, '../../data'))) throw new Error('Badwords path traversal detected!');
-      badWords = JSON.parse(fs.readFileSync(badwordsPath, 'utf8'));
-    } catch (e) {
-      logger.error('MODERATION: Failed to load badwords.json', e);
-    }
-    if (Array.isArray(badWords) && badWords.length > 0) {
+    // --- Bad word filter (from cache) ---
+    const cachedWords = loadBadWords();
+    if (cachedWords && cachedWords.length > 0) {
       const content = message.content.toLowerCase();
-      const found = badWords.find(word => content.includes(word.toLowerCase()));
-      if (found) {
+      const foundItem = cachedWords.find(item => content.includes(item.lower));
+      if (foundItem) {
+        const found = foundItem.original;
         didModerate = true;
         try {
           await message.delete();
